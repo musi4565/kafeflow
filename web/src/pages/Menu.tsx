@@ -11,7 +11,7 @@ import type { MenuResponse, Product } from "../lib/types";
 import { speak } from "../lib/speech";
 import { useLanguage } from "../context/LanguageContext";
 import { matchesVoiceKeyword, voiceLangCode } from "../lib/translations";
-import { VOICE_COMMAND_EVENT } from "../context/VoiceContext";
+import { VOICE_COMMAND_EVENT, useVoice } from "../context/VoiceContext";
 
 const ALL_CATEGORY = "__ALL__";
 
@@ -19,6 +19,7 @@ export default function Menu() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const { voiceEnabled } = useVoice();
   const tableParam = searchParams.get("stol");
   const tableNumber = tableParam ? Number(tableParam) : null;
 
@@ -67,9 +68,11 @@ export default function Menu() {
       addItem(product);
       setAddedFlash(product.id);
       setTimeout(() => setAddedFlash(null), 700);
-      speak(`${product.name} ${t("voice.addedToCartSuffix")}`, voiceLangCode(language));
+      if (voiceEnabled) {
+        speak(`${product.name} ${t("voice.addedToCartSuffix")}`, voiceLangCode(language));
+      }
     },
-    [addItem, t, language]
+    [addItem, t, language, voiceEnabled]
   );
 
   // Per-page voice command handling: subscribe to the global recognizer's events.

@@ -16,8 +16,10 @@ interface VoiceContextValue {
 const VoiceContext = createContext<VoiceContextValue | null>(null);
 
 const STORAGE_KEY = "kafeflow_voice_enabled";
-const MAX_CONSECUTIVE_ERRORS = 2;
-const RESTART_DELAY_MS = 300;
+const MAX_CONSECUTIVE_ERRORS = 5;
+const RESTART_DELAY_MS = 500;
+// Errors more than this far apart are treated as unrelated transient blips, not a real failure streak.
+const ERROR_WINDOW_MS = 4000;
 
 function readInitialEnabled(): boolean {
   try {
@@ -39,6 +41,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   const restartTimerRef = useRef<number | null>(null);
   const explicitStopRef = useRef(false);
   const errorCountRef = useRef(0);
+  const lastErrorAtRef = useRef(0);
   const permissionDeniedRef = useRef(false);
 
   const voiceEnabledRef = useRef(voiceEnabled);
@@ -103,6 +106,10 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     recognition.interimResults = false;
 
     recognition.onresult = (event: any) => {
+      // Ignore anything picked up while the app itself is talking (TTS confirmations) —
+      // on devices without headphones the mic can otherwise "hear" our own speaker output
+      // and misfire on it.
+      if (typeof window !== "undefined" && window.speechSynthesis?.speaking) return;
       errorCountRef.current = 0;
       const text: string = event.results?.[0]?.[0]?.transcript?.trim() || "";
       if (!text) return;
@@ -114,10 +121,21 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     recognition.onerror = (event: any) => {
       const err = event?.error;
       if (err === "no-speech" || err === "aborted") return;
+      // Errors while the app is speaking are almost always TTS/mic contention, not a
+      // real failure — don't let them count against the voice session.
+      if (typeof window !== "undefined" && window.speechSynthesis?.speaking) return;
       if (err === "not-allowed" || err === "service-not-allowed") {
         permissionDeniedRef.current = true;
       }
+      const now = Date.now();
+      // Only count errors as a real failure streak if they're happening in quick
+      // succession. A one-off "audio-capture"/"network" blip minutes apart from
+      // normal continuous-listening restarts is not a genuine failure.
+      if (now - lastErrorAtRef.current > ERROR_WINDOW_MS) {
+        errorCountRef.current = 0;
+      }
       errorCountRef.current += 1;
+      lastErrorAtRef.current = now;
     };
 
     recognition.onend = () => {
@@ -155,6 +173,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     }
 
     errorCountRef.current = 0;
+    lastErrorAtRef.current = 0;
     permissionDeniedRef.current = false;
     explicitStopRef.current = false;
     setVoiceEnabledState(true);
