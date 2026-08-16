@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  WAITER
+}
+
+enum OrderStatus {
+  NEW
+  PREPARING
+  READY
+  PAID
+  CANCELLED
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  WAITING_PAYMENT
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  role     Role
+  name     String
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  price       Int
+  category    String
+  imageUrl    String
+  active      Boolean     @default(true)
+  orderItems  OrderItem[]
+}
+
+model Table {
+  id     Int         @id @default(autoincrement())
+  number Int         @unique
+  status TableStatus @default(AVAILABLE)
+  orders Order[]
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  tableId     Int
+  table       Table       @relation(fields: [tableId], references: [id])
+  status      OrderStatus @default(NEW)
+  total       Int
+  items       OrderItem[]
+  payment     Payment?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  cancelledAt DateTime?
+  telegramChatId String?
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int
+  name      String
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  orderId   Int           @unique
+  order     Order         @relation(fields: [orderId], references: [id])
+  method    PaymentMethod
+  amount    Int
+  createdAt DateTime      @default(now())
+}
+
+model Inventory {
+  id                Int    @id @default(autoincrement())
+  name              String
+  quantity          Float
+  unit              String
+  minThreshold      Float
+  criticalThreshold Float
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  orderId   Int?
+  type      String
+  message   String
+  createdAt DateTime @default(now())
+}
