@@ -4,13 +4,14 @@ import { orderCode, todayStart } from "./format";
 export async function getDashboard() {
   const start = todayStart();
 
-  const [revenueAgg, ordersToday, occupiedTables, totalTables, cancelledToday, recentOrders] =
+  const [revenueAgg, ordersToday, occupiedTables, totalTables, cancelledToday, noShowToday, recentOrders] =
     await Promise.all([
       prisma.payment.aggregate({ _sum: { amount: true }, where: { createdAt: { gte: start } } }),
       prisma.order.count({ where: { createdAt: { gte: start } } }),
       prisma.table.count({ where: { status: { not: "AVAILABLE" } } }),
       prisma.table.count(),
       prisma.order.count({ where: { status: "CANCELLED", cancelledAt: { gte: start } } }),
+      prisma.order.count({ where: { status: "CANCELLED", cancelReason: "NO_SHOW", cancelledAt: { gte: start } } }),
       prisma.order.findMany({
         where: { createdAt: { gte: start } },
         orderBy: { createdAt: "desc" },
@@ -32,6 +33,7 @@ export async function getDashboard() {
     occupiedTables,
     totalTables,
     cancelledToday,
+    noShowToday,
     topProduct: top ? { name: top.name, qty: top._sum.quantity ?? 0 } : null,
     recentOrders: recentOrders.map((o) => ({
       id: o.id,

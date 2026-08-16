@@ -52,6 +52,14 @@ export async function notifyPaid(orderId: number, amount: number) {
   );
 }
 
+export async function notifyNoShow(orderId: number, tableNumber: number) {
+  await send(
+    `⚠️ Mijoz kelmadi.\nBuyurtma: ${orderCode(orderId)}\nStol: №${String(tableNumber).padStart(2, "0")} boʻshatildi.`,
+    orderId,
+    "NO_SHOW"
+  );
+}
+
 export function startBot(): void {
   if (!bot) {
     console.log("[telegram] TELEGRAM_BOT_TOKEN berilmagan — mock notification rejimida ishlayapti.");
@@ -96,5 +104,12 @@ export function startBot(): void {
     );
   });
 
-  bot.launch().then(() => console.log("[telegram] bot ishga tushdi"));
+  bot
+    .launch()
+    .then(() => console.log("[telegram] bot ishga tushdi"))
+    .catch((err) => {
+      // Don't let a polling failure (e.g. another instance already holding the
+      // getUpdates connection) take down the whole API server.
+      console.error("[telegram] bot ishga tushmadi:", (err as Error).message);
+    });
 }

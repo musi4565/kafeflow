@@ -66,6 +66,7 @@ export interface DashboardResponse {
   occupiedTables: number;
   totalTables: number;
   cancelledToday: number;
+  noShowToday: number;
   topProduct: { name: string; qty: number } | null;
   recentOrders: Array<{
     id: string;

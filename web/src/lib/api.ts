@@ -95,6 +95,9 @@ export const api = {
   cancelOrder: (id: string) =>
     request<Order>(`/api/orders/${id}/cancel`, { method: "POST" }),
 
+  markNoShow: (id: string) =>
+    request<Order>(`/api/orders/${id}/no-show`, { method: "POST" }),
+
   payOrder: (id: string, method: PaymentMethod) =>
     request<{ order: Order; payment: unknown }>(`/api/orders/${id}/payment`, {
       method: "POST",

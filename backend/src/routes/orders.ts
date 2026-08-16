@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db";
 import { emitEvent } from "../socket";
-import { notifyOrderReceived, notifyPreparing, notifyReady, notifyPaid } from "../telegram";
+import { notifyOrderReceived, notifyPreparing, notifyReady, notifyPaid, notifyNoShow } from "../telegram";
 import { CANCEL_WINDOW_MS, orderCode, tableCode } from "../lib/format";
 import { applyInventoryConsumption, serializeInventory } from "../lib/inventory";
 import { getDashboard } from "../lib/dashboard";
@@ -192,7 +192,7 @@ router.post("/:id/cancel", async (req, res) => {
 
   const updated = await prisma.order.update({
     where: { id },
-    data: { status: "CANCELLED", cancelledAt: new Date() },
+    data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "CUSTOMER_CANCELLED" },
     include: orderInclude,
   });
 
@@ -207,6 +207,45 @@ router.post("/:id/cancel", async (req, res) => {
   const serialized = serializeOrder(updated);
   emitEvent("order:updated", serialized);
   emitEvent("dashboard:updated", await getDashboard());
+
+  res.json(serialized);
+});
+
+// Staff-initiated: customer never showed up / never collected a ready order.
+// Unlike /cancel (customer self-service, NEW-only, 3-minute window), this works
+// for NEW/PREPARING/READY and has no time limit — it's a waiter judgment call.
+router.post("/:id/no-show", async (req, res) => {
+  const id = Number(req.params.id);
+  const order = await prisma.order.findUnique({ where: { id }, include: orderInclude });
+  if (!order) {
+    res.status(404).json({ error: "Buyurtma topilmadi." });
+    return;
+  }
+
+  if (order.status === "PAID" || order.status === "CANCELLED") {
+    res.status(400).json({ error: "Bu buyurtmani endi bekor qilib bo'lmaydi." });
+    return;
+  }
+
+  const updated = await prisma.order.update({
+    where: { id },
+    data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "NO_SHOW" },
+    include: orderInclude,
+  });
+
+  await prisma.table.update({ where: { id: order.tableId }, data: { status: "AVAILABLE" } });
+  emitEvent("table:updated", {
+    id: order.table.id,
+    code: tableCode(order.table.number),
+    number: order.table.number,
+    status: "AVAILABLE",
+  });
+
+  const serialized = serializeOrder(updated);
+  emitEvent("order:updated", serialized);
+  emitEvent("dashboard:updated", await getDashboard());
+
+  await notifyNoShow(id, order.table.number);
 
   res.json(serialized);
 });

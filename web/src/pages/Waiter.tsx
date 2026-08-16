@@ -34,6 +34,9 @@ export default function Waiter() {
   const [paySubmitting, setPaySubmitting] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [payQueuedMsg, setPayQueuedMsg] = useState<string | null>(null);
+  const [noShowConfirming, setNoShowConfirming] = useState(false);
+  const [noShowSubmitting, setNoShowSubmitting] = useState(false);
+  const [noShowError, setNoShowError] = useState<string | null>(null);
 
   const loadTables = useCallback(async () => {
     try {
@@ -102,18 +105,37 @@ export default function Waiter() {
     setOrderDetail(null);
     setPaymentOpen(false);
     setPayError(null);
+    setNoShowConfirming(false);
+    setNoShowError(null);
+  };
+
+  const handleNoShow = async () => {
+    if (!orderDetail) return;
+    setNoShowSubmitting(true);
+    setNoShowError(null);
+    try {
+      await api.markNoShow(orderDetail.id);
+      closeTable();
+      loadTables();
+    } catch (e) {
+      setNoShowError(e instanceof ApiError ? e.message : t("waiter.noShowError"));
+      setNoShowConfirming(false);
+    } finally {
+      setNoShowSubmitting(false);
+    }
   };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (paymentOpen) setPaymentOpen(false);
+        else if (noShowConfirming) setNoShowConfirming(false);
         else if (selectedTable) closeTable();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [paymentOpen, selectedTable]);
+  }, [paymentOpen, selectedTable, noShowConfirming]);
 
   // Voice: "toʻlov" opens the payment modal for the currently open order detail.
   useEffect(() => {
@@ -282,13 +304,46 @@ export default function Waiter() {
                   <p className="mt-6 rounded-full bg-moss/10 py-2.5 text-center text-sm font-medium text-moss">
                     {t("waiter.paid")}
                   </p>
+                ) : noShowConfirming ? (
+                  <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-center">
+                    <p className="text-sm text-red-800">{t("waiter.noShowConfirmQuestion")}</p>
+                    <div className="mt-3 flex gap-3">
+                      <button
+                        onClick={handleNoShow}
+                        disabled={noShowSubmitting}
+                        className="focus-ring flex-1 rounded-full bg-red-600 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
+                      >
+                        {noShowSubmitting ? t("kitchen.actionSubmitting") : t("waiter.noShowConfirmYes")}
+                      </button>
+                      <button
+                        onClick={() => setNoShowConfirming(false)}
+                        disabled={noShowSubmitting}
+                        className="focus-ring flex-1 rounded-full border border-charcoal/20 py-2.5 text-sm font-medium hover:border-charcoal/40"
+                      >
+                        {t("waiter.noShowConfirmNo")}
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <button
-                    onClick={() => setPaymentOpen(true)}
-                    className="focus-ring mt-6 w-full rounded-full bg-charcoal py-3 text-sm font-medium text-ivory transition hover:bg-moss"
-                  >
-                    {t("waiter.acceptPayment")}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setPaymentOpen(true)}
+                      className="focus-ring mt-6 w-full rounded-full bg-charcoal py-3 text-sm font-medium text-ivory transition hover:bg-moss"
+                    >
+                      {t("waiter.acceptPayment")}
+                    </button>
+                    <button
+                      onClick={() => setNoShowConfirming(true)}
+                      className="focus-ring mt-3 w-full rounded-full border border-red-200 py-3 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                    >
+                      {t("waiter.noShowButton")}
+                    </button>
+                    {noShowError && (
+                      <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700" role="alert">
+                        {noShowError}
+                      </p>
+                    )}
+                  </>
                 )}
               </>
             ) : (

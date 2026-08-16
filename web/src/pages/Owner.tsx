@@ -139,7 +139,7 @@ export default function Owner() {
 
         {!loading && !error && dashboard && (
           <>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
               <StatTile label={t("owner.stat.revenue")} value={formatSum(dashboard.revenueToday)} />
               <StatTile label={t("owner.stat.orders")} value={String(dashboard.ordersToday)} />
               <StatTile
@@ -147,6 +147,7 @@ export default function Owner() {
                 value={`${dashboard.occupiedTables} / ${dashboard.totalTables}`}
               />
               <StatTile label={t("owner.stat.cancelled")} value={String(dashboard.cancelledToday)} />
+              <StatTile label={t("owner.noShowLabel")} value={String(dashboard.noShowToday)} />
             </div>
 
             <div className="mt-10 grid gap-6 lg:grid-cols-3">
