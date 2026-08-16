@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ClipboardCheck, Menu as MenuIcon, ShoppingCart, X } from "lucide-react";
+import { Menu as MenuIcon, ShoppingCart, X } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { useCart } from "../context/CartContext";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -33,30 +33,6 @@ function CartButton({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-// Lets a customer who already placed an order find their live status page
-// again — e.g. after browsing back to the menu, or reopening the site.
-function MyOrderButton({ onNavigate }: { onNavigate?: () => void }) {
-  const navigate = useNavigate();
-  const { t } = useLanguage();
-  const { lastOrderId } = useCart();
-
-  if (!lastOrderId) return null;
-
-  return (
-    <button
-      onClick={() => {
-        onNavigate?.();
-        navigate(`/buyurtma/${lastOrderId}`);
-      }}
-      className="focus-ring flex items-center gap-2 rounded-full border border-charcoal/20 px-3 py-2.5 text-xs font-medium text-charcoal/80 transition hover:bg-charcoal hover:text-ivory"
-      aria-label={t("header.myOrder")}
-    >
-      <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
-      <span className="hidden lg:inline">{t("header.myOrder")}</span>
-    </button>
-  );
-}
-
 export function PublicHeader() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -65,7 +41,7 @@ export function PublicHeader() {
   const links = [
     { label: t("header.menu"), href: "/menyu" },
     { label: t("header.about"), href: "/#biz-haqimizda" },
-    { label: t("header.order"), href: "/menyu" },
+    { label: t("header.order"), href: "/buyurtmalarim" },
     { label: t("header.contact"), href: "/#aloqa" },
   ];
 
@@ -91,7 +67,6 @@ export function PublicHeader() {
         <div className="hidden items-center gap-3 md:flex">
           <LanguageSwitcher />
           <VoiceToggleButton compact />
-          <MyOrderButton />
           <CartButton />
           <button
             onClick={() => navigate("/menyu")}
@@ -102,7 +77,6 @@ export function PublicHeader() {
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
-          <MyOrderButton />
           <CartButton />
           <button
             className="focus-ring rounded p-2"

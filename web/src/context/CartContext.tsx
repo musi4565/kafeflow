@@ -12,8 +12,8 @@ interface CartContextValue {
   clearCart: () => void;
   totalCount: number;
   totalPrice: number;
-  lastOrderId: string | null;
-  setLastOrderId: (id: string | null) => void;
+  myOrderIds: string[];
+  addOrderId: (id: string) => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -22,7 +22,7 @@ function storageKey(table: number | null) {
   return `kafeflow_cart_${table ?? "default"}`;
 }
 
-const LAST_ORDER_KEY = "kafeflow_last_order_id";
+const MY_ORDERS_KEY = "kafeflow_my_orders";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [tableNumber, setTableNumberState] = useState<number | null>(() => {
@@ -30,14 +30,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return raw ? Number(raw) : null;
   });
 
-  const [lastOrderId, setLastOrderIdState] = useState<string | null>(() =>
-    localStorage.getItem(LAST_ORDER_KEY)
-  );
+  const [myOrderIds, setMyOrderIds] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(MY_ORDERS_KEY);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
 
-  const setLastOrderId = useCallback((id: string | null) => {
-    setLastOrderIdState(id);
-    if (id) localStorage.setItem(LAST_ORDER_KEY, id);
-    else localStorage.removeItem(LAST_ORDER_KEY);
+  // Newest first; a customer can place more than one order over a visit.
+  const addOrderId = useCallback((id: string) => {
+    setMyOrderIds((prev) => {
+      const next = [id, ...prev.filter((existing) => existing !== id)];
+      localStorage.setItem(MY_ORDERS_KEY, JSON.stringify(next));
+      return next;
+    });
   }, []);
 
   const [items, setItems] = useState<CartItem[]>(() => {
@@ -124,8 +132,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     clearCart,
     totalCount,
     totalPrice,
-    lastOrderId,
-    setLastOrderId,
+    myOrderIds,
+    addOrderId,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

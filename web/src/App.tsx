@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Menu from "./pages/Menu";
 import Cart from "./pages/Cart";
+import MyOrders from "./pages/MyOrders";
 import OrderStatus from "./pages/OrderStatus";
 import Kitchen from "./pages/Kitchen";
 import Login from "./pages/Login";
@@ -56,6 +57,14 @@ export default function App() {
             element={
               <PageTransition>
                 <Cart />
+              </PageTransition>
+            }
+          />
+          <Route
+            path="/buyurtmalarim"
+            element={
+              <PageTransition>
+                <MyOrders />
               </PageTransition>
             }
           />

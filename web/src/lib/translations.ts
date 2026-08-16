@@ -10,7 +10,7 @@ const uz = {
   // Header / nav
   "header.menu": "Menyu",
   "header.about": "Biz haqimizda",
-  "header.order": "Buyurtma",
+  "header.order": "Mening buyurtmalarim",
   "header.contact": "Aloqa",
   "header.orderButton": "Buyurtma berish",
   "header.nav.aria": "Asosiy navigatsiya",
@@ -23,6 +23,12 @@ const uz = {
   "header.lang.aria": "Tilni tanlash",
   "header.cart.aria": "Savatni koʻrish",
   "header.myOrder": "Buyurtmam",
+  "myOrders.title": "Mening buyurtmalarim",
+  "myOrders.emptyTitle": "Hali buyurtma bermagansiz",
+  "myOrders.emptyDesc": "Menyudan mahsulot tanlab, birinchi buyurtmangizni bering.",
+  "myOrders.goToMenu": "Menyuga oʻtish",
+  "myOrders.loading": "Buyurtmalar yuklanmoqda...",
+  "myOrders.table": "Stol №",
 
   // Footer
   "footer.tagline": "Kichik kafe uchun buyurtma, oshxona va toʻlovni bitta sodda tizimda boshqarish.",
@@ -277,7 +283,7 @@ type TranslationKey = keyof typeof uz;
 const ru: Record<TranslationKey, string> = {
   "header.menu": "Меню",
   "header.about": "О нас",
-  "header.order": "Заказ",
+  "header.order": "Мои заказы",
   "header.contact": "Контакты",
   "header.orderButton": "Сделать заказ",
   "header.nav.aria": "Основная навигация",
@@ -290,6 +296,12 @@ const ru: Record<TranslationKey, string> = {
   "header.lang.aria": "Выбор языка",
   "header.cart.aria": "Смотреть корзину",
   "header.myOrder": "Мой заказ",
+  "myOrders.title": "Мои заказы",
+  "myOrders.emptyTitle": "Вы ещё не оформляли заказ",
+  "myOrders.emptyDesc": "Выберите блюда из меню и оформите первый заказ.",
+  "myOrders.goToMenu": "Перейти в меню",
+  "myOrders.loading": "Заказы загружаются...",
+  "myOrders.table": "Стол №",
 
   "footer.tagline": "Управляйте заказами, кухней и оплатой небольшого кафе в одной простой системе.",
   "footer.contact": "Контакты",
@@ -527,7 +539,7 @@ const ru: Record<TranslationKey, string> = {
 const en: Record<TranslationKey, string> = {
   "header.menu": "Menu",
   "header.about": "About us",
-  "header.order": "Order",
+  "header.order": "My orders",
   "header.contact": "Contact",
   "header.orderButton": "Order now",
   "header.nav.aria": "Main navigation",
@@ -540,6 +552,12 @@ const en: Record<TranslationKey, string> = {
   "header.lang.aria": "Select language",
   "header.cart.aria": "View cart",
   "header.myOrder": "My order",
+  "myOrders.title": "My orders",
+  "myOrders.emptyTitle": "You haven't placed an order yet",
+  "myOrders.emptyDesc": "Choose dishes from the menu and place your first order.",
+  "myOrders.goToMenu": "Go to menu",
+  "myOrders.loading": "Loading orders...",
+  "myOrders.table": "Table #",
 
   "footer.tagline": "Manage ordering, kitchen and payment for a small café in one simple system.",
   "footer.contact": "Contact",
