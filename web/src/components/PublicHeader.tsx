@@ -17,7 +17,7 @@ export function PublicHeader({ voiceEnabled, onToggleVoice, showVoiceToggle }: P
   const links = [
     { label: "Menyu", href: "/menyu" },
     { label: "Biz haqimizda", href: "/#biz-haqimizda" },
-    { label: "Buyurtma", href: "/#qanday-ishlaydi" },
+    { label: "Buyurtma", href: "/menyu" },
     { label: "Aloqa", href: "/#aloqa" },
   ];
 
