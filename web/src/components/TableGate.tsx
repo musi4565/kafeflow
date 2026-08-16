@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { QrCode } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { isQrScanSupported } from "../lib/qr";
+import { api, ApiError } from "../lib/api";
 import { QrScanner } from "./QrScanner";
 
 interface TableGateProps {
@@ -14,6 +15,27 @@ export function TableGate({ onSelect }: TableGateProps) {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  // A table is only free to claim if no one else already has an active order
+  // on it — prevents two different customers from ending up on the same table.
+  const selectTable = async (n: number) => {
+    setChecking(true);
+    setError(null);
+    try {
+      const tables = await api.getTables();
+      const table = tables.find((tb) => tb.number === n);
+      if (table && table.status !== "AVAILABLE") {
+        setError(t("tableGate.occupied"));
+        return;
+      }
+      onSelect(n);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t("tableGate.checkError"));
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -22,7 +44,7 @@ export function TableGate({ onSelect }: TableGateProps) {
       setError(t("tableGate.invalidNumber"));
       return;
     }
-    onSelect(n);
+    selectTable(n);
   };
 
   return (
@@ -39,7 +61,8 @@ export function TableGate({ onSelect }: TableGateProps) {
       {isQrScanSupported() && (
         <button
           onClick={() => setScanning(true)}
-          className="focus-ring mt-6 w-full rounded-full bg-charcoal py-3 text-sm font-medium text-ivory transition hover:bg-moss"
+          disabled={checking}
+          className="focus-ring mt-6 w-full rounded-full bg-charcoal py-3 text-sm font-medium text-ivory transition hover:bg-moss disabled:opacity-60"
         >
           {t("tableGate.scanButton")}
         </button>
@@ -69,9 +92,10 @@ export function TableGate({ onSelect }: TableGateProps) {
         )}
         <button
           type="submit"
-          className="focus-ring w-full rounded-full border border-charcoal/20 py-3 text-sm font-medium transition hover:border-charcoal/40"
+          disabled={checking}
+          className="focus-ring w-full rounded-full border border-charcoal/20 py-3 text-sm font-medium transition hover:border-charcoal/40 disabled:opacity-60"
         >
-          {t("tableGate.continueButton")}
+          {checking ? t("tableGate.checking") : t("tableGate.continueButton")}
         </button>
       </form>
 
@@ -79,7 +103,7 @@ export function TableGate({ onSelect }: TableGateProps) {
         <QrScanner
           onDetect={(n) => {
             setScanning(false);
-            onSelect(n);
+            selectTable(n);
           }}
           onClose={() => setScanning(false)}
         />
