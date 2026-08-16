@@ -7,6 +7,9 @@ import { formatSum } from "../lib/format";
 import { getSocket } from "../lib/socket";
 import { inventoryStatusColor, inventoryStatusLabel, orderStatusColor, orderStatusLabel } from "../lib/labels";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { VoiceToggleButton } from "../components/VoiceToggleButton";
 import type { DashboardResponse, InventoryItem } from "../lib/types";
 
 function StatTile({ label, value }: { label: string; value: string }) {
@@ -18,11 +21,11 @@ function StatTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MiniBarChart({ data }: { data: { label: string; value: number }[] }) {
+function MiniBarChart({ data, ariaLabel }: { data: { label: string; value: number }[]; ariaLabel: string }) {
   if (data.length === 0) return null;
   const max = Math.max(...data.map((d) => d.value), 1);
   return (
-    <div className="flex items-end gap-3 pt-2" style={{ height: 120 }} role="img" aria-label="Buyurtmalar summasi diagrammasi">
+    <div className="flex items-end gap-3 pt-2" style={{ height: 120 }} role="img" aria-label={ariaLabel}>
       {data.map((d, i) => (
         <div key={i} className="flex flex-1 flex-col items-center gap-2">
           <div
@@ -39,6 +42,7 @@ function MiniBarChart({ data }: { data: { label: string; value: number }[] }) {
 export default function Owner() {
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
 
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -53,11 +57,11 @@ export default function Owner() {
       setDashboard(data);
       setError(null);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Maʼlumotlarni yuklab boʻlmadi.");
+      setError(e instanceof ApiError ? e.message : t("owner.errorFallback"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadInventory = useCallback(async () => {
     try {
@@ -65,11 +69,11 @@ export default function Owner() {
       setInventory(data);
       setInvError(null);
     } catch (e) {
-      setInvError(e instanceof ApiError ? e.message : "Ombor maʼlumotlarini yuklab boʻlmadi.");
+      setInvError(e instanceof ApiError ? e.message : t("owner.inventoryErrorFallback"));
     } finally {
       setInvLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadDashboard();
@@ -107,57 +111,62 @@ export default function Owner() {
           <div className="flex items-center gap-3">
             <LayoutGrid className="h-6 w-6 text-moss" aria-hidden="true" />
             <div>
-              <h1 className="font-display text-2xl font-semibold">Boshqaruv paneli</h1>
+              <h1 className="font-display text-2xl font-semibold">{t("owner.title")}</h1>
               <p className="text-xs text-charcoal/50">{auth?.name}</p>
             </div>
           </div>
-          <button
-            onClick={() => {
-              logout();
-              navigate("/kirish");
-            }}
-            className="focus-ring flex items-center gap-2 rounded-full border border-charcoal/20 px-4 py-2 text-sm font-medium hover:border-charcoal/40"
-          >
-            <LogOut className="h-4 w-4" aria-hidden="true" /> Chiqish
-          </button>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <VoiceToggleButton compact />
+            <button
+              onClick={() => {
+                logout();
+                navigate("/kirish");
+              }}
+              className="focus-ring flex items-center gap-2 rounded-full border border-charcoal/20 px-4 py-2 text-sm font-medium hover:border-charcoal/40"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" /> {t("owner.logout")}
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <h2 className="mb-4 text-lg font-semibold">Bugungi holat</h2>
+        <h2 className="mb-4 text-lg font-semibold">{t("owner.todayStatus")}</h2>
 
-        {loading && <LoadingState label="Maʼlumotlar yuklanmoqda..." />}
+        {loading && <LoadingState label={t("owner.loading")} />}
         {!loading && error && <ErrorState message={error} onRetry={loadDashboard} />}
 
         {!loading && !error && dashboard && (
           <>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <StatTile label="Tushum" value={formatSum(dashboard.revenueToday)} />
-              <StatTile label="Buyurtmalar" value={String(dashboard.ordersToday)} />
+              <StatTile label={t("owner.stat.revenue")} value={formatSum(dashboard.revenueToday)} />
+              <StatTile label={t("owner.stat.orders")} value={String(dashboard.ordersToday)} />
               <StatTile
-                label="Band stollar"
+                label={t("owner.stat.occupiedTables")}
                 value={`${dashboard.occupiedTables} / ${dashboard.totalTables}`}
               />
-              <StatTile label="Bekor qilingan" value={String(dashboard.cancelledToday)} />
+              <StatTile label={t("owner.stat.cancelled")} value={String(dashboard.cancelledToday)} />
             </div>
 
             <div className="mt-10 grid gap-6 lg:grid-cols-3">
               <section className="lg:col-span-2 rounded-2xl border border-charcoal/10 bg-white p-6">
-                <h3 className="mb-4 text-base font-semibold">Bugungi buyurtmalar</h3>
+                <h3 className="mb-4 text-base font-semibold">{t("owner.recentOrders")}</h3>
                 {dashboard.recentOrders.length === 0 ? (
-                  <EmptyState title="Hozircha buyurtma yoʻq" />
+                  <EmptyState title={t("owner.emptyOrders")} />
                 ) : (
                   <ul className="divide-y divide-charcoal/10">
                     {dashboard.recentOrders.map((o) => (
                       <li key={o.id} className="flex items-center justify-between py-3 text-sm">
                         <span className="font-medium">№{o.code}</span>
                         <span className="text-charcoal/60">
-                          Stol №{String(o.tableNumber).padStart(2, "0")}
+                          {t("owner.table")}
+                          {String(o.tableNumber).padStart(2, "0")}
                         </span>
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold ${orderStatusColor(o.status)}`}
                         >
-                          {orderStatusLabel(o.status)}
+                          {orderStatusLabel(o.status, language)}
                         </span>
                         <span className="font-semibold">{formatSum(o.total)}</span>
                       </li>
@@ -168,23 +177,23 @@ export default function Owner() {
 
               <section className="rounded-2xl border border-charcoal/10 bg-white p-6">
                 <h3 className="mb-1 flex items-center gap-2 text-base font-semibold">
-                  <TrendingUp className="h-4 w-4 text-moss" aria-hidden="true" /> Kunlik hisobot
+                  <TrendingUp className="h-4 w-4 text-moss" aria-hidden="true" /> {t("owner.dailyReport")}
                 </h3>
                 <dl className="mt-4 space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-charcoal/60">Jami tushum</dt>
+                    <dt className="text-charcoal/60">{t("owner.totalRevenue")}</dt>
                     <dd className="font-semibold">{formatSum(dashboard.revenueToday)}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-charcoal/60">Jami buyurtmalar</dt>
+                    <dt className="text-charcoal/60">{t("owner.totalOrders")}</dt>
                     <dd className="font-semibold">{dashboard.ordersToday}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-charcoal/60">Bekor qilingan</dt>
+                    <dt className="text-charcoal/60">{t("owner.cancelledLabel")}</dt>
                     <dd className="font-semibold">{dashboard.cancelledToday}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-charcoal/60">Eng koʻp sotilgan</dt>
+                    <dt className="text-charcoal/60">{t("owner.topProduct")}</dt>
                     <dd className="font-semibold">
                       {dashboard.topProduct ? `${dashboard.topProduct.name} (${dashboard.topProduct.qty})` : "—"}
                     </dd>
@@ -193,6 +202,7 @@ export default function Owner() {
 
                 {dashboard.recentOrders.length > 0 && (
                   <MiniBarChart
+                    ariaLabel={t("owner.chartAria")}
                     data={dashboard.recentOrders.slice(0, 6).map((o) => ({
                       label: `№${o.code.replace("ORD-", "")}`,
                       value: o.total,
@@ -206,23 +216,21 @@ export default function Owner() {
 
         <section className="mt-10 rounded-2xl border border-charcoal/10 bg-white p-6">
           <h3 className="mb-4 flex items-center gap-2 text-base font-semibold">
-            <Package className="h-4 w-4 text-moss" aria-hidden="true" /> Ombor
+            <Package className="h-4 w-4 text-moss" aria-hidden="true" /> {t("owner.inventory")}
           </h3>
 
-          {invLoading && <LoadingState label="Ombor yuklanmoqda..." />}
+          {invLoading && <LoadingState label={t("owner.inventoryLoading")} />}
           {!invLoading && invError && <ErrorState message={invError} onRetry={loadInventory} />}
-          {!invLoading && !invError && inventory.length === 0 && (
-            <EmptyState title="Ombor maʼlumotlari yoʻq" />
-          )}
+          {!invLoading && !invError && inventory.length === 0 && <EmptyState title={t("owner.inventoryEmpty")} />}
 
           {!invLoading && !invError && inventory.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[480px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-charcoal/10 text-xs uppercase tracking-wide text-charcoal/50">
-                    <th className="py-2 pr-4 font-medium">Mahsulot</th>
-                    <th className="py-2 pr-4 font-medium">Miqdor</th>
-                    <th className="py-2 pr-4 font-medium">Holat</th>
+                    <th className="py-2 pr-4 font-medium">{t("owner.inventory.product")}</th>
+                    <th className="py-2 pr-4 font-medium">{t("owner.inventory.qty")}</th>
+                    <th className="py-2 pr-4 font-medium">{t("owner.inventory.status")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -236,7 +244,7 @@ export default function Owner() {
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold ${inventoryStatusColor(item.status)}`}
                         >
-                          {inventoryStatusLabel(item.status)}
+                          {inventoryStatusLabel(item.status, language)}
                         </span>
                       </td>
                     </tr>

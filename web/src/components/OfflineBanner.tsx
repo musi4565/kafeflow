@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLanguage } from "../context/LanguageContext";
 
 export function OfflineBanner() {
+  const { t } = useLanguage();
   const [online, setOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
 
   useEffect(() => {
@@ -25,9 +27,7 @@ export function OfflineBanner() {
           className="overflow-hidden bg-red-600 text-white"
           role="status"
         >
-          <p className="px-4 py-2 text-center text-sm font-medium">
-            ⚠️ Internet aloqasi yoʻq. Maʼlumotlar vaqtincha saqlanmoqda.
-          </p>
+          <p className="px-4 py-2 text-center text-sm font-medium">{t("offline.message")}</p>
         </motion.div>
       )}
     </AnimatePresence>

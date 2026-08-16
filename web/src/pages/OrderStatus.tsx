@@ -9,14 +9,10 @@ import { formatCountdown, formatSum } from "../lib/format";
 import { getSocket } from "../lib/socket";
 import type { Order } from "../lib/types";
 import { speak } from "../lib/speech";
-
-const TIMELINE = [
-  { key: "NEW", label: "Qabul qilindi" },
-  { key: "PREPARING", label: "Tayyorlanmoqda" },
-  { key: "READY", label: "Tayyor" },
-  { key: "WAITING_PAYMENT", label: "Toʻlov kutilmoqda" },
-  { key: "PAID", label: "Toʻlandi" },
-];
+import { useLanguage } from "../context/LanguageContext";
+import { matchesVoiceKeyword, voiceLangCode } from "../lib/translations";
+import { VOICE_COMMAND_EVENT } from "../context/VoiceContext";
+import type { TranslationKey } from "../lib/translations";
 
 function stepIndex(status: Order["status"]): number {
   switch (status) {
@@ -36,6 +32,16 @@ function stepIndex(status: Order["status"]): number {
 export default function OrderStatus() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
+
+  const TIMELINE: { key: string; labelKey: TranslationKey }[] = [
+    { key: "NEW", labelKey: "orderStatus.timeline.new" },
+    { key: "PREPARING", labelKey: "orderStatus.timeline.preparing" },
+    { key: "READY", labelKey: "orderStatus.timeline.ready" },
+    { key: "WAITING_PAYMENT", labelKey: "orderStatus.timeline.waitingPayment" },
+    { key: "PAID", labelKey: "orderStatus.timeline.paid" },
+  ];
+
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,11 +58,11 @@ export default function OrderStatus() {
       setOrder(data);
       setError(null);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Buyurtma topilmadi.");
+      setError(e instanceof ApiError ? e.message : t("orderStatus.notFound"));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadOrder();
@@ -91,43 +97,65 @@ export default function OrderStatus() {
   useEffect(() => {
     if (!order) return;
     if (lastStatus.current && lastStatus.current !== order.status) {
-      const messages: Record<string, string> = {
-        PREPARING: "Buyurtmangiz tayyorlanmoqda.",
-        READY: "Buyurtmangiz tayyor!",
-        PAID: "Toʻlov qabul qilindi. Rahmat!",
-        CANCELLED: "Buyurtmangiz bekor qilindi.",
+      const messages: Partial<Record<Order["status"], TranslationKey>> = {
+        PREPARING: "orderStatus.speakPreparing",
+        READY: "orderStatus.speakReady",
+        PAID: "orderStatus.speakPaid",
+        CANCELLED: "orderStatus.speakCancelled",
       };
-      const msg = messages[order.status];
-      if (msg) {
+      const key = messages[order.status];
+      if (key) {
+        const msg = t(key);
         setLiveMessage(msg);
-        speak(msg);
+        speak(msg, voiceLangCode(language));
       }
     }
     lastStatus.current = order.status;
-  }, [order]);
+  }, [order, t, language]);
 
-  const handleCancel = async () => {
+  const handleCancel = useCallback(async () => {
     if (!id) return;
     setCancelling(true);
     setCancelError(null);
     try {
       const updated = await api.cancelOrder(id);
       setOrder(updated);
-      setLiveMessage("Buyurtma bekor qilindi.");
+      setLiveMessage(t("orderStatus.cancelledLive"));
     } catch (e) {
-      setCancelError(
-        e instanceof ApiError ? e.message : "🔒 Buyurtmani bekor qilish vaqti tugagan."
-      );
+      setCancelError(e instanceof ApiError ? e.message : t("orderStatus.cancelErrorFallback"));
     } finally {
       setCancelling(false);
     }
-  };
+  }, [id, t]);
+
+  const deadline = order?.cancelDeadline ? new Date(order.cancelDeadline).getTime() : null;
+  const msRemaining = deadline ? deadline - now : 0;
+  const timerExpired = deadline ? msRemaining <= 0 : true;
+  const canCancel = order?.status === "NEW" && order?.canCancel !== false && !timerExpired;
+
+  // Voice: "bekor qil" cancels the order if allowed, otherwise announces why not.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const text = (e as CustomEvent<{ text: string }>).detail?.text || "";
+      if (!text) return;
+      const lower = text.toLowerCase();
+      if (matchesVoiceKeyword(lower, language, "cancel")) {
+        if (canCancel && !cancelling) {
+          handleCancel();
+        } else {
+          speak(t("orderStatus.cancelErrorFallback"), voiceLangCode(language));
+        }
+      }
+    };
+    window.addEventListener(VOICE_COMMAND_EVENT, handler);
+    return () => window.removeEventListener(VOICE_COMMAND_EVENT, handler);
+  }, [canCancel, cancelling, handleCancel, t, language]);
 
   if (loading) {
     return (
       <div>
         <PublicHeader />
-        <LoadingState label="Buyurtma yuklanmoqda..." />
+        <LoadingState label={t("orderStatus.loading")} />
       </div>
     );
   }
@@ -136,15 +164,11 @@ export default function OrderStatus() {
     return (
       <div>
         <PublicHeader />
-        <ErrorState message={error || "Buyurtma topilmadi."} onRetry={loadOrder} />
+        <ErrorState message={error || t("orderStatus.notFound")} onRetry={loadOrder} />
       </div>
     );
   }
 
-  const deadline = order.cancelDeadline ? new Date(order.cancelDeadline).getTime() : null;
-  const msRemaining = deadline ? deadline - now : 0;
-  const timerExpired = deadline ? msRemaining <= 0 : true;
-  const canCancel = order.status === "NEW" && order.canCancel !== false && !timerExpired;
   const currentStep = order.status === "CANCELLED" ? -1 : stepIndex(order.status);
   const tableNum = order.table ?? order.tableNumber;
 
@@ -163,17 +187,21 @@ export default function OrderStatus() {
           className="text-center"
         >
           <p className="inline-flex items-center gap-2 rounded-full bg-moss/10 px-4 py-1.5 text-sm font-semibold text-moss">
-            <Check className="h-4 w-4" aria-hidden="true" /> Buyurtmangiz qabul qilindi
+            <Check className="h-4 w-4" aria-hidden="true" /> {t("orderStatus.accepted")}
           </p>
-          <h1 className="mt-4 font-display text-4xl font-semibold">Buyurtma №{order.code}</h1>
+          <h1 className="mt-4 font-display text-4xl font-semibold">
+            {t("orderStatus.orderNum")}
+            {order.code}
+          </h1>
           <p className="mt-2 text-charcoal/60">
-            Stol №{String(tableNum).padStart(2, "0")} · Jami: {formatSum(order.total)}
+            {t("orderStatus.table")}
+            {String(tableNum).padStart(2, "0")} · {t("orderStatus.total")} {formatSum(order.total)}
           </p>
         </motion.div>
 
         {order.status === "NEW" && (
           <div className="mt-10 flex flex-col items-center rounded-2xl border border-charcoal/10 bg-white p-8 text-center">
-            <p className="text-sm font-medium text-charcoal/60">Bekor qilish vaqti</p>
+            <p className="text-sm font-medium text-charcoal/60">{t("orderStatus.cancelTimeLabel")}</p>
             <p className="mt-2 font-display text-5xl font-semibold tabular-nums">
               {timerExpired ? "00:00" : formatCountdown(msRemaining)}
             </p>
@@ -184,11 +212,11 @@ export default function OrderStatus() {
                 disabled={cancelling}
                 className="focus-ring mt-6 rounded-full border border-red-300 px-6 py-3 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-60"
               >
-                {cancelling ? "Bekor qilinmoqda..." : "Buyurtmani bekor qilish"}
+                {cancelling ? t("orderStatus.cancelling") : t("orderStatus.cancelButton")}
               </button>
             ) : (
               <p className="mt-6 flex items-center gap-2 text-sm font-medium text-charcoal/50">
-                <Lock className="h-4 w-4" aria-hidden="true" /> Bekor qilish vaqti tugadi.
+                <Lock className="h-4 w-4" aria-hidden="true" /> {t("orderStatus.cancelExpired")}
               </p>
             )}
 
@@ -202,11 +230,11 @@ export default function OrderStatus() {
 
         {order.status === "CANCELLED" ? (
           <div className="mt-10 rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
-            Bu buyurtma bekor qilindi.
+            {t("orderStatus.cancelledOrderMsg")}
           </div>
         ) : (
           <div className="mt-12">
-            <h2 className="sr-only">Buyurtma holati</h2>
+            <h2 className="sr-only">{t("orderStatus.statusHeading")}</h2>
             <ol className="flex flex-col gap-0">
               {TIMELINE.map((step, idx) => {
                 const done = idx < currentStep || order.status === "PAID";
@@ -238,7 +266,7 @@ export default function OrderStatus() {
                           done || active ? "text-charcoal" : "text-charcoal/40"
                         }`}
                       >
-                        {step.label}
+                        {t(step.labelKey)}
                       </p>
                     </div>
                   </li>
@@ -249,7 +277,7 @@ export default function OrderStatus() {
         )}
 
         <div className="mt-4 rounded-2xl border border-charcoal/10 p-6">
-          <p className="mb-4 text-sm font-semibold text-charcoal/60">Buyurtma tarkibi</p>
+          <p className="mb-4 text-sm font-semibold text-charcoal/60">{t("orderStatus.contentsTitle")}</p>
           <ul className="divide-y divide-charcoal/10">
             {order.items.map((item) => (
               <li key={item.productId} className="flex items-center justify-between py-3 text-sm">
@@ -267,7 +295,7 @@ export default function OrderStatus() {
             onClick={() => navigate("/menyu")}
             className="focus-ring rounded-full border border-charcoal/20 px-6 py-3 text-sm font-medium hover:border-charcoal/40"
           >
-            Yangi buyurtma berish
+            {t("orderStatus.newOrderButton")}
           </button>
         </div>
       </main>

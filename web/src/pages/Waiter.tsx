@@ -11,12 +11,18 @@ import { getSocket } from "../lib/socket";
 import { flushOfflineQueue, queuePayment } from "../lib/offlineQueue";
 import { tableStatusColor, tableStatusLabel } from "../lib/labels";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { VoiceToggleButton } from "../components/VoiceToggleButton";
+import { matchesVoiceKeyword } from "../lib/translations";
+import { VOICE_COMMAND_EVENT } from "../context/VoiceContext";
 import type { Order, PaymentMethod, TableInfo } from "../lib/types";
 
 export default function Waiter() {
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
   const online = useOnlineStatus();
+  const { t, language } = useLanguage();
 
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,11 +41,11 @@ export default function Waiter() {
       setTables(data);
       setError(null);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Stollarni yuklab boʻlmadi.");
+      setError(e instanceof ApiError ? e.message : t("waiter.errorFallback"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadTables();
@@ -67,13 +73,13 @@ export default function Waiter() {
     if (online) {
       flushOfflineQueue().then((n) => {
         if (n > 0) {
-          setPayQueuedMsg(`${n} ta saqlangan toʻlov yuborildi.`);
+          setPayQueuedMsg(`${n} ${t("waiter.queuedFlushedMsg")}`);
           loadTables();
           setTimeout(() => setPayQueuedMsg(null), 4000);
         }
       });
     }
-  }, [online, loadTables]);
+  }, [online, loadTables, t]);
 
   const openTable = async (table: TableInfo) => {
     setSelectedTable(table);
@@ -109,6 +115,22 @@ export default function Waiter() {
     return () => window.removeEventListener("keydown", onKey);
   }, [paymentOpen, selectedTable]);
 
+  // Voice: "toʻlov" opens the payment modal for the currently open order detail.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const text = (e as CustomEvent<{ text: string }>).detail?.text || "";
+      if (!text) return;
+      const lower = text.toLowerCase();
+      if (matchesVoiceKeyword(lower, language, "payment")) {
+        if (orderDetail && orderDetail.status !== "PAID" && !paymentOpen) {
+          setPaymentOpen(true);
+        }
+      }
+    };
+    window.addEventListener(VOICE_COMMAND_EVENT, handler);
+    return () => window.removeEventListener(VOICE_COMMAND_EVENT, handler);
+  }, [orderDetail, paymentOpen, language]);
+
   const handleConfirmPayment = async (method: PaymentMethod) => {
     if (!orderDetail) return;
     setPaySubmitting(true);
@@ -119,7 +141,7 @@ export default function Waiter() {
       setPaySubmitting(false);
       setPaymentOpen(false);
       closeTable();
-      setPayQueuedMsg("Internet yoʻq — toʻlov saqlab qoʻyildi, ulanish tiklanganda yuboriladi.");
+      setPayQueuedMsg(t("waiter.offlinePayQueued"));
       setTimeout(() => setPayQueuedMsg(null), 5000);
       return;
     }
@@ -130,9 +152,7 @@ export default function Waiter() {
       closeTable();
       loadTables();
     } catch (e) {
-      setPayError(
-        e instanceof ApiError ? e.message : "Toʻlov amalga oshmadi. Qayta urinib koʻring."
-      );
+      setPayError(e instanceof ApiError ? e.message : t("waiter.payError"));
     } finally {
       setPaySubmitting(false);
     }
@@ -146,19 +166,23 @@ export default function Waiter() {
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-moss" aria-hidden="true" />
             <div>
-              <h1 className="font-display text-2xl font-semibold">Bugungi stollar</h1>
+              <h1 className="font-display text-2xl font-semibold">{t("waiter.title")}</h1>
               <p className="text-xs text-charcoal/50">{auth?.name}</p>
             </div>
           </div>
-          <button
-            onClick={() => {
-              logout();
-              navigate("/kirish");
-            }}
-            className="focus-ring flex items-center gap-2 rounded-full border border-charcoal/20 px-4 py-2 text-sm font-medium hover:border-charcoal/40"
-          >
-            <LogOut className="h-4 w-4" aria-hidden="true" /> Chiqish
-          </button>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <VoiceToggleButton compact />
+            <button
+              onClick={() => {
+                logout();
+                navigate("/kirish");
+              }}
+              className="focus-ring flex items-center gap-2 rounded-full border border-charcoal/20 px-4 py-2 text-sm font-medium hover:border-charcoal/40"
+            >
+              <LogOut className="h-4 w-4" aria-hidden="true" /> {t("waiter.logout")}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -169,7 +193,7 @@ export default function Waiter() {
       )}
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        {loading && <LoadingState label="Stollar yuklanmoqda..." />}
+        {loading && <LoadingState label={t("waiter.loading")} />}
         {!loading && error && <ErrorState message={error} onRetry={loadTables} />}
 
         {!loading && !error && (
@@ -183,10 +207,11 @@ export default function Waiter() {
                 )}`}
               >
                 <span className="font-display text-2xl font-semibold">
-                  STOL №{String(table.number).padStart(2, "0")}
+                  {t("waiter.table")}
+                  {String(table.number).padStart(2, "0")}
                 </span>
                 <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold">
-                  {tableStatusLabel(table.status)}
+                  {tableStatusLabel(table.status, language)}
                 </span>
                 {table.activeOrder && (
                   <span className="text-xs font-medium opacity-70">
@@ -216,26 +241,28 @@ export default function Waiter() {
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 id="table-detail-title" className="font-display text-2xl font-semibold">
-                STOL №{String(selectedTable.number).padStart(2, "0")}
+                {t("waiter.table")}
+                {String(selectedTable.number).padStart(2, "0")}
               </h2>
               <button
                 onClick={closeTable}
                 className="focus-ring rounded-full p-1.5 text-charcoal/60 hover:bg-charcoal/5"
-                aria-label="Yopish"
+                aria-label={t("waiter.close")}
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {!selectedTable.activeOrder ? (
-              <p className="py-8 text-center text-sm text-charcoal/60">
-                Bu stolda faol buyurtma yoʻq.
-              </p>
+              <p className="py-8 text-center text-sm text-charcoal/60">{t("waiter.noActiveOrder")}</p>
             ) : detailLoading ? (
-              <LoadingState label="Buyurtma yuklanmoqda..." />
+              <LoadingState label={t("waiter.orderLoading")} />
             ) : orderDetail ? (
               <>
-                <p className="text-sm text-charcoal/60">Buyurtma №{orderDetail.code}</p>
+                <p className="text-sm text-charcoal/60">
+                  {t("waiter.orderNum")}
+                  {orderDetail.code}
+                </p>
                 <ul className="mt-4 divide-y divide-charcoal/10 border-y border-charcoal/10">
                   {orderDetail.items.map((item) => (
                     <li key={item.productId} className="flex justify-between py-2.5 text-sm">
@@ -247,27 +274,25 @@ export default function Waiter() {
                   ))}
                 </ul>
                 <div className="mt-4 flex items-center justify-between">
-                  <p className="font-medium">Jami</p>
+                  <p className="font-medium">{t("waiter.total")}</p>
                   <p className="font-display text-2xl font-semibold">{formatSum(orderDetail.total)}</p>
                 </div>
 
                 {orderDetail.status === "PAID" ? (
                   <p className="mt-6 rounded-full bg-moss/10 py-2.5 text-center text-sm font-medium text-moss">
-                    Toʻlangan
+                    {t("waiter.paid")}
                   </p>
                 ) : (
                   <button
                     onClick={() => setPaymentOpen(true)}
                     className="focus-ring mt-6 w-full rounded-full bg-charcoal py-3 text-sm font-medium text-ivory transition hover:bg-moss"
                   >
-                    Toʻlovni qabul qilish
+                    {t("waiter.acceptPayment")}
                   </button>
                 )}
               </>
             ) : (
-              <p className="py-8 text-center text-sm text-red-600">
-                Buyurtma maʼlumotini yuklab boʻlmadi.
-              </p>
+              <p className="py-8 text-center text-sm text-red-600">{t("waiter.orderLoadError")}</p>
             )}
           </motion.div>
         </div>

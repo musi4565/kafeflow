@@ -1,24 +1,20 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu as MenuIcon, Mic, MicOff, X } from "lucide-react";
-import { isVoiceSupported } from "../lib/speech";
+import { Menu as MenuIcon, X } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { VoiceToggleButton } from "./VoiceToggleButton";
 
-interface PublicHeaderProps {
-  voiceEnabled?: boolean;
-  onToggleVoice?: () => void;
-  showVoiceToggle?: boolean;
-}
-
-export function PublicHeader({ voiceEnabled, onToggleVoice, showVoiceToggle }: PublicHeaderProps) {
+export function PublicHeader() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const voiceSupported = isVoiceSupported();
+  const { t } = useLanguage();
 
   const links = [
-    { label: "Menyu", href: "/menyu" },
-    { label: "Biz haqimizda", href: "/#biz-haqimizda" },
-    { label: "Buyurtma", href: "/menyu" },
-    { label: "Aloqa", href: "/#aloqa" },
+    { label: t("header.menu"), href: "/menyu" },
+    { label: t("header.about"), href: "/#biz-haqimizda" },
+    { label: t("header.order"), href: "/menyu" },
+    { label: t("header.contact"), href: "/#aloqa" },
   ];
 
   return (
@@ -28,7 +24,7 @@ export function PublicHeader({ voiceEnabled, onToggleVoice, showVoiceToggle }: P
           KafeFlow
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Asosiy navigatsiya">
+        <nav className="hidden items-center gap-8 md:flex" aria-label={t("header.nav.aria")}>
           {links.map((l) => (
             <a
               key={l.label}
@@ -41,29 +37,20 @@ export function PublicHeader({ voiceEnabled, onToggleVoice, showVoiceToggle }: P
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          {showVoiceToggle && voiceSupported && (
-            <button
-              onClick={onToggleVoice}
-              className="focus-ring flex items-center gap-2 rounded-full border border-charcoal/20 px-3 py-2 text-xs font-medium text-charcoal/80 transition hover:bg-charcoal hover:text-ivory"
-              aria-pressed={voiceEnabled}
-              aria-label={voiceEnabled ? "Ovozli rejimni oʻchirish" : "Ovozli rejimni yoqish"}
-            >
-              {voiceEnabled ? <Mic className="h-4 w-4" aria-hidden="true" /> : <MicOff className="h-4 w-4" aria-hidden="true" />}
-              Ovozli rejim
-            </button>
-          )}
+          <LanguageSwitcher />
+          <VoiceToggleButton compact />
           <button
             onClick={() => navigate("/menyu")}
             className="focus-ring rounded-full bg-charcoal px-5 py-2.5 text-sm font-medium text-ivory transition hover:bg-moss"
           >
-            Buyurtma berish
+            {t("header.orderButton")}
           </button>
         </div>
 
         <button
           className="focus-ring rounded p-2 md:hidden"
           onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "Menyuni yopish" : "Menyuni ochish"}
+          aria-label={open ? t("header.menuClose") : t("header.menuOpen")}
           aria-expanded={open}
         >
           {open ? <X className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
@@ -72,7 +59,7 @@ export function PublicHeader({ voiceEnabled, onToggleVoice, showVoiceToggle }: P
 
       {open && (
         <div className="border-t border-charcoal/10 bg-ivory px-5 py-4 md:hidden">
-          <nav className="flex flex-col gap-4" aria-label="Mobil navigatsiya">
+          <nav className="flex flex-col gap-4" aria-label={t("header.nav.mobile.aria")}>
             {links.map((l) => (
               <a
                 key={l.label}
@@ -83,6 +70,10 @@ export function PublicHeader({ voiceEnabled, onToggleVoice, showVoiceToggle }: P
                 {l.label}
               </a>
             ))}
+            <div className="mt-1 flex items-center gap-3">
+              <LanguageSwitcher />
+              <VoiceToggleButton compact />
+            </div>
             <button
               onClick={() => {
                 setOpen(false);
@@ -90,7 +81,7 @@ export function PublicHeader({ voiceEnabled, onToggleVoice, showVoiceToggle }: P
               }}
               className="focus-ring mt-2 w-full rounded-full bg-charcoal px-5 py-3 text-sm font-medium text-ivory"
             >
-              Buyurtma berish
+              {t("header.orderButton")}
             </button>
           </nav>
         </div>

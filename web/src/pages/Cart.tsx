@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
@@ -7,16 +7,21 @@ import { EmptyState } from "../components/States";
 import { useCart } from "../context/CartContext";
 import { api, ApiError } from "../lib/api";
 import { formatSum } from "../lib/format";
+import { useLanguage } from "../context/LanguageContext";
+import { matchesVoiceKeyword, voiceLangCode } from "../lib/translations";
+import { VOICE_COMMAND_EVENT } from "../context/VoiceContext";
+import { speak } from "../lib/speech";
 
 export default function Cart() {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const { items, tableNumber, incrementItem, decrementItem, removeItem, totalPrice, clearCart } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!tableNumber) {
-      setError("Stol raqami aniqlanmadi. Iltimos, QR-kod orqali qayta kiring.");
+      setError(t("cart.errorNoTable"));
       return;
     }
     if (items.length === 0) return;
@@ -30,11 +35,29 @@ export default function Cart() {
       clearCart();
       navigate(`/buyurtma/${order.id}`);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Buyurtma yuborilmadi. Qayta urinib koʻring.");
+      setError(e instanceof ApiError ? e.message : t("cart.errorSubmit"));
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [tableNumber, items, clearCart, navigate, t]);
+
+  // Voice: "buyurtma ber" submits the order (same handler as the button).
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const text = (e as CustomEvent<{ text: string }>).detail?.text || "";
+      if (!text) return;
+      const lower = text.toLowerCase();
+      if (matchesVoiceKeyword(lower, language, "order")) {
+        if (items.length === 0) {
+          speak(t("cart.voiceEmpty"), voiceLangCode(language));
+          return;
+        }
+        handleSubmit();
+      }
+    };
+    window.addEventListener(VOICE_COMMAND_EVENT, handler);
+    return () => window.removeEventListener(VOICE_COMMAND_EVENT, handler);
+  }, [items, language, t, handleSubmit]);
 
   return (
     <div className="min-h-screen pb-16">
@@ -44,26 +67,26 @@ export default function Cart() {
           onClick={() => navigate(-1)}
           className="focus-ring mb-6 flex items-center gap-2 text-sm font-medium text-charcoal/60 hover:text-charcoal"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Orqaga
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> {t("cart.back")}
         </button>
 
-        <h1 className="font-display text-4xl font-semibold">Buyurtmangiz</h1>
+        <h1 className="font-display text-4xl font-semibold">{t("cart.title")}</h1>
         {tableNumber !== null && (
-          <p className="mt-2 text-sm text-charcoal/60">STOL №{String(tableNumber).padStart(2, "0")}</p>
+          <p className="mt-2 text-sm text-charcoal/60">
+            {t("cart.table")}
+            {String(tableNumber).padStart(2, "0")}
+          </p>
         )}
 
         {items.length === 0 ? (
           <div className="mt-8">
-            <EmptyState
-              title="Savat boʻsh"
-              description="Menyudan mahsulot tanlab, savatga qoʻshing."
-            />
+            <EmptyState title={t("cart.emptyTitle")} description={t("cart.emptyDesc")} />
             <div className="text-center">
               <button
                 onClick={() => navigate("/menyu")}
                 className="focus-ring rounded-full bg-charcoal px-6 py-3 text-sm font-medium text-ivory hover:bg-moss"
               >
-                Menyuga oʻtish
+                {t("cart.goToMenu")}
               </button>
             </div>
           </div>
@@ -89,7 +112,7 @@ export default function Cart() {
                     <button
                       onClick={() => decrementItem(item.productId)}
                       className="focus-ring rounded-full p-1.5 hover:bg-charcoal/5"
-                      aria-label={`${item.name} sonini kamaytirish`}
+                      aria-label={`${item.name} ${t("cart.decreaseAria")}`}
                     >
                       <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -99,7 +122,7 @@ export default function Cart() {
                     <button
                       onClick={() => incrementItem(item.productId)}
                       className="focus-ring rounded-full p-1.5 hover:bg-charcoal/5"
-                      aria-label={`${item.name} sonini oshirish`}
+                      aria-label={`${item.name} ${t("cart.increaseAria")}`}
                     >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -110,7 +133,7 @@ export default function Cart() {
                   <button
                     onClick={() => removeItem(item.productId)}
                     className="focus-ring rounded-full p-2 text-charcoal/40 hover:bg-red-50 hover:text-red-600"
-                    aria-label={`${item.name} savatdan oʻchirish`}
+                    aria-label={`${item.name} ${t("cart.removeAria")}`}
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -119,7 +142,7 @@ export default function Cart() {
             </motion.ul>
 
             <div className="mt-6 flex items-center justify-between">
-              <p className="text-lg font-medium">Jami</p>
+              <p className="text-lg font-medium">{t("cart.total")}</p>
               <p className="font-display text-3xl font-semibold">{formatSum(totalPrice)}</p>
             </div>
 
@@ -134,7 +157,7 @@ export default function Cart() {
               disabled={submitting}
               className="focus-ring mt-8 w-full rounded-full bg-charcoal py-4 text-base font-medium text-ivory transition hover:bg-moss disabled:opacity-60"
             >
-              {submitting ? "Yuborilmoqda..." : "Buyurtma berish"}
+              {submitting ? t("cart.submitting") : t("cart.submit")}
             </button>
           </>
         )}

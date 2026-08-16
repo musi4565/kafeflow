@@ -6,6 +6,9 @@ import { api, ApiError } from "../lib/api";
 import { formatSum } from "../lib/format";
 import { getSocket } from "../lib/socket";
 import type { Order } from "../lib/types";
+import { useLanguage } from "../context/LanguageContext";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { VoiceToggleButton } from "../components/VoiceToggleButton";
 
 interface OrderCardProps {
   order: Order;
@@ -16,6 +19,7 @@ interface OrderCardProps {
 }
 
 function OrderCard({ order, actionLabel, onAction, actionLoading, finalLabel }: OrderCardProps) {
+  const { t } = useLanguage();
   const tableNum = order.table ?? order.tableNumber;
   return (
     <motion.div
@@ -29,7 +33,8 @@ function OrderCard({ order, actionLabel, onAction, actionLoading, finalLabel }: 
       <div className="flex items-center justify-between">
         <p className="font-display text-lg font-semibold">№{order.code}</p>
         <span className="rounded-full bg-beige px-3 py-1 text-xs font-semibold">
-          Stol №{String(tableNum).padStart(2, "0")}
+          {t("kitchen.table")}
+          {String(tableNum).padStart(2, "0")}
         </span>
       </div>
       <ul className="mt-4 space-y-1.5">
@@ -40,7 +45,9 @@ function OrderCard({ order, actionLabel, onAction, actionLoading, finalLabel }: 
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-xs text-charcoal/50">Jami: {formatSum(order.total)}</p>
+      <p className="mt-3 text-xs text-charcoal/50">
+        {t("kitchen.total")} {formatSum(order.total)}
+      </p>
 
       {actionLabel && onAction && (
         <button
@@ -48,7 +55,7 @@ function OrderCard({ order, actionLabel, onAction, actionLoading, finalLabel }: 
           disabled={actionLoading}
           className="focus-ring mt-5 w-full rounded-full bg-charcoal py-2.5 text-sm font-medium text-ivory transition hover:bg-moss disabled:opacity-60"
         >
-          {actionLoading ? "Yuborilmoqda..." : actionLabel}
+          {actionLoading ? t("kitchen.actionSubmitting") : actionLabel}
         </button>
       )}
       {finalLabel && (
@@ -61,6 +68,7 @@ function OrderCard({ order, actionLabel, onAction, actionLoading, finalLabel }: 
 }
 
 export default function Kitchen() {
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,11 +80,11 @@ export default function Kitchen() {
       setOrders(active);
       setError(null);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Buyurtmalarni yuklab boʻlmadi.");
+      setError(e instanceof ApiError ? e.message : t("kitchen.errorFallback"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadOrders();
@@ -106,7 +114,7 @@ export default function Kitchen() {
       await api.updateOrderStatus(id, status);
       await loadOrders();
     } catch {
-      setError("Holatni yangilab boʻlmadi. Qayta urinib koʻring.");
+      setError(t("kitchen.statusUpdateError"));
     } finally {
       setBusyId(null);
     }
@@ -118,49 +126,55 @@ export default function Kitchen() {
 
   const columns = [
     {
-      title: "Yangi",
+      title: t("kitchen.col.new"),
       list: newOrders,
       render: (o: Order) => (
         <OrderCard
           key={o.id}
           order={o}
-          actionLabel="Tayyorlashni boshlash"
+          actionLabel={t("kitchen.actionStart")}
           actionLoading={busyId === o.id}
           onAction={() => updateStatus(o.id, "PREPARING")}
         />
       ),
     },
     {
-      title: "Tayyorlanmoqda",
+      title: t("kitchen.col.preparing"),
       list: preparingOrders,
       render: (o: Order) => (
         <OrderCard
           key={o.id}
           order={o}
-          actionLabel="Tayyor"
+          actionLabel={t("kitchen.actionReady")}
           actionLoading={busyId === o.id}
           onAction={() => updateStatus(o.id, "READY")}
         />
       ),
     },
     {
-      title: "Tayyor",
+      title: t("kitchen.col.ready"),
       list: readyOrders,
-      render: (o: Order) => <OrderCard key={o.id} order={o} finalLabel="Mijozga berildi" />,
+      render: (o: Order) => <OrderCard key={o.id} order={o} finalLabel={t("kitchen.servedLabel")} />,
     },
   ];
 
   return (
     <div className="min-h-screen bg-ivory">
       <header className="border-b border-charcoal/10 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-5">
-          <ChefHat className="h-6 w-6 text-moss" aria-hidden="true" />
-          <h1 className="font-display text-2xl font-semibold">Oshxona</h1>
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+          <div className="flex items-center gap-3">
+            <ChefHat className="h-6 w-6 text-moss" aria-hidden="true" />
+            <h1 className="font-display text-2xl font-semibold">{t("kitchen.title")}</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <VoiceToggleButton compact />
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        {loading && <LoadingState label="Buyurtmalar yuklanmoqda..." />}
+        {loading && <LoadingState label={t("kitchen.loading")} />}
         {!loading && error && <ErrorState message={error} onRetry={loadOrders} />}
 
         {!loading && !error && (
@@ -175,7 +189,7 @@ export default function Kitchen() {
                 </div>
                 <div className="flex flex-col gap-4">
                   {col.list.length === 0 ? (
-                    <EmptyState title="Hozircha boʻsh" />
+                    <EmptyState title={t("kitchen.empty")} />
                   ) : (
                     col.list.map((o) => col.render(o))
                   )}

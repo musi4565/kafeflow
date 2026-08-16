@@ -1,43 +1,48 @@
+import { translate, type Language } from "./translations";
 import type { InventoryStatus, OrderStatus, TableStatus } from "./types";
 
-export const orderStatusLabel = (status: OrderStatus, context: "customer" | "kitchen" = "customer"): string => {
+export const orderStatusLabel = (
+  status: OrderStatus,
+  language: Language,
+  context: "customer" | "kitchen" = "customer"
+): string => {
   switch (status) {
     case "NEW":
-      return context === "kitchen" ? "Yangi" : "Qabul qilindi";
+      return translate(language, context === "kitchen" ? "label.order.new.kitchen" : "label.order.new.customer");
     case "PREPARING":
-      return "Tayyorlanmoqda";
+      return translate(language, "label.order.preparing");
     case "READY":
-      return "Tayyor";
+      return translate(language, "label.order.ready");
     case "PAID":
-      return "Toʻlandi";
+      return translate(language, "label.order.paid");
     case "CANCELLED":
-      return "Bekor qilindi";
+      return translate(language, "label.order.cancelled");
     default:
       return status;
   }
 };
 
-export const tableStatusLabel = (status: TableStatus): string => {
+export const tableStatusLabel = (status: TableStatus, language: Language): string => {
   switch (status) {
     case "AVAILABLE":
-      return "Boʻsh";
+      return translate(language, "label.table.available");
     case "OCCUPIED":
-      return "Buyurtma bor";
+      return translate(language, "label.table.occupied");
     case "WAITING_PAYMENT":
-      return "Toʻlov kutilmoqda";
+      return translate(language, "label.table.waitingPayment");
     default:
       return status;
   }
 };
 
-export const inventoryStatusLabel = (status: InventoryStatus): string => {
+export const inventoryStatusLabel = (status: InventoryStatus, language: Language): string => {
   switch (status) {
     case "YETARLI":
-      return "Yetarli";
+      return translate(language, "label.inventory.yetarli");
     case "KAMAYMOQDA":
-      return "Kamaymoqda";
+      return translate(language, "label.inventory.kamaymoqda");
     case "TUGAYAPTI":
-      return "Tugayapti";
+      return translate(language, "label.inventory.tugayapti");
     default:
       return status;
   }

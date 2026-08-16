@@ -1,10 +1,12 @@
 import { AlertTriangle, Loader2, PackageOpen } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
-export function LoadingState({ label = "Yuklanmoqda..." }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-charcoal/60" role="status" aria-live="polite">
       <Loader2 className="h-7 w-7 animate-spin" aria-hidden="true" />
-      <p className="text-sm">{label}</p>
+      <p className="text-sm">{label ?? t("states.loadingDefault")}</p>
     </div>
   );
 }
@@ -32,6 +34,7 @@ export function ErrorState({
   message: string;
   onRetry?: () => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center" role="alert">
       <AlertTriangle className="h-8 w-8 text-red-600" aria-hidden="true" />
@@ -41,7 +44,7 @@ export function ErrorState({
           onClick={onRetry}
           className="focus-ring rounded-full border border-charcoal/20 px-5 py-2 text-sm font-medium text-charcoal transition hover:bg-charcoal hover:text-ivory"
         >
-          Qayta urinib koʻrish
+          {t("states.retry")}
         </button>
       )}
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Banknote, CreditCard, Smartphone, X } from "lucide-react";
 import { formatSum } from "../lib/format";
+import { useLanguage } from "../context/LanguageContext";
 import type { Order, PaymentMethod } from "../lib/types";
 
 interface PaymentModalProps {
@@ -12,14 +13,15 @@ interface PaymentModalProps {
   errorMessage?: string | null;
 }
 
-const methods: { value: PaymentMethod; label: string; icon: typeof Banknote }[] = [
-  { value: "CASH", label: "Naqd pul", icon: Banknote },
-  { value: "CARD", label: "Karta", icon: CreditCard },
-  { value: "ONLINE", label: "Onlayn", icon: Smartphone },
-];
-
 export function PaymentModal({ order, onClose, onConfirm, submitting, errorMessage }: PaymentModalProps) {
+  const { t } = useLanguage();
   const [method, setMethod] = useState<PaymentMethod>("CASH");
+
+  const methods: { value: PaymentMethod; label: string; icon: typeof Banknote }[] = [
+    { value: "CASH", label: t("payment.method.cash"), icon: Banknote },
+    { value: "CARD", label: t("payment.method.card"), icon: CreditCard },
+    { value: "ONLINE", label: t("payment.method.online"), icon: Smartphone },
+  ];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -46,22 +48,25 @@ export function PaymentModal({ order, onClose, onConfirm, submitting, errorMessa
       >
         <div className="mb-5 flex items-center justify-between">
           <h2 id="payment-modal-title" className="font-display text-2xl font-semibold">
-            Toʻlov
+            {t("payment.title")}
           </h2>
           <button
             onClick={onClose}
             className="focus-ring rounded-full p-1.5 text-charcoal/60 hover:bg-charcoal/5"
-            aria-label="Yopish"
+            aria-label={t("payment.close")}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <p className="text-sm text-charcoal/60">Buyurtma №{order.code}</p>
+        <p className="text-sm text-charcoal/60">
+          {t("payment.orderNum")}
+          {order.code}
+        </p>
         <p className="mt-1 font-display text-3xl font-semibold">{formatSum(order.total)}</p>
 
         <fieldset className="mt-6">
-          <legend className="mb-3 text-sm font-medium text-charcoal/70">Toʻlov usulini tanlang</legend>
+          <legend className="mb-3 text-sm font-medium text-charcoal/70">{t("payment.method.label")}</legend>
           <div className="grid grid-cols-3 gap-3">
             {methods.map((m) => {
               const Icon = m.icon;
@@ -97,7 +102,7 @@ export function PaymentModal({ order, onClose, onConfirm, submitting, errorMessa
           disabled={submitting}
           className="focus-ring mt-6 w-full rounded-full bg-charcoal py-3 text-sm font-medium text-ivory transition hover:bg-moss disabled:opacity-60"
         >
-          {submitting ? "Yuborilmoqda..." : "Toʻlovni tasdiqlash"}
+          {submitting ? t("payment.submitting") : t("payment.confirm")}
         </button>
       </motion.div>
     </div>
