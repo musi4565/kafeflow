@@ -36,6 +36,22 @@ function serializeOrder(order: any) {
 
 const orderInclude = { table: true, items: true, payment: true };
 
+router.get("/", async (req, res) => {
+  const statusParam = typeof req.query.status === "string" ? req.query.status : "";
+  const statuses = statusParam
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const orders = await prisma.order.findMany({
+    where: statuses.length > 0 ? { status: { in: statuses as any } } : undefined,
+    include: orderInclude,
+    orderBy: { createdAt: "asc" },
+  });
+
+  res.json(orders.map(serializeOrder));
+});
+
 router.post("/", async (req, res) => {
   const { tableNumber, items } = req.body ?? {};
 
