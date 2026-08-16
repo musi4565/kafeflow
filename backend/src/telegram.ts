@@ -58,11 +58,13 @@ export function startBot(): void {
     return;
   }
 
-  bot.start((ctx) =>
-    ctx.reply(
+  bot.start(async (ctx) => {
+    console.log(`[telegram] /start qabul qilindi. chat.id=${ctx.chat.id}`);
+    await logNotification(null, "BOT_START", `chat.id=${ctx.chat.id} bot bilan suhbatni boshladi.`);
+    await ctx.reply(
       "🍽 KafeFlow botiga xush kelibsiz!\n\nBuyurtma holatini bilish uchun quyidagicha yozing:\n/holat ORD-001"
-    )
-  );
+    );
+  });
 
   bot.command("holat", async (ctx) => {
     const parts = ctx.message.text.split(" ").filter(Boolean);
