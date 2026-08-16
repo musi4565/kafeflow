@@ -11,6 +11,7 @@ import Waiter from "./pages/Waiter";
 import Owner from "./pages/Owner";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Splash } from "./components/Splash";
 
 function PageTransition({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +31,7 @@ export default function App() {
 
   return (
     <>
+      <Splash />
       <OfflineBanner />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
