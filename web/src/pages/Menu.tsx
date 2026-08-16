@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Search, ShoppingCart } from "lucide-react";
 import { PublicHeader } from "../components/PublicHeader";
+import { TableGate } from "../components/TableGate";
 import { LoadingState, EmptyState, ErrorState } from "../components/States";
 import { api, ApiError } from "../lib/api";
 import { formatSum } from "../lib/format";
@@ -21,9 +22,9 @@ export default function Menu() {
   const { t, language } = useLanguage();
   const { voiceEnabled } = useVoice();
   const tableParam = searchParams.get("stol");
-  const tableNumber = tableParam ? Number(tableParam) : null;
+  const urlTableNumber = tableParam ? Number(tableParam) : null;
 
-  const { setTableNumber, addItem, totalCount, totalPrice } = useCart();
+  const { tableNumber, setTableNumber, addItem, totalCount, totalPrice } = useCart();
 
   const [menu, setMenu] = useState<MenuResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,11 +35,14 @@ export default function Menu() {
   const [addedFlash, setAddedFlash] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // A real QR code on the table encodes ?stol=NN — sync it into the cart's
+  // persisted table selection. If there's no param (e.g. arriving from the
+  // landing page's "Buyurtma berish" button), TableGate below asks for it.
   useEffect(() => {
-    if (tableNumber !== null && !Number.isNaN(tableNumber)) {
-      setTableNumber(tableNumber);
+    if (urlTableNumber !== null && !Number.isNaN(urlTableNumber)) {
+      setTableNumber(urlTableNumber);
     }
-  }, [tableNumber, setTableNumber]);
+  }, [urlTableNumber, setTableNumber]);
 
   const loadMenu = useCallback(async () => {
     setLoading(true);
@@ -147,17 +151,19 @@ export default function Menu() {
       </div>
 
       <main className="mx-auto max-w-6xl px-5 py-10">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            {tableNumber !== null && !Number.isNaN(tableNumber) && (
-              <p className="mb-2 inline-block rounded-full bg-moss/10 px-4 py-1.5 text-sm font-semibold text-moss">
-                {t("menu.table")}
-                {String(tableNumber).padStart(2, "0")}
-              </p>
-            )}
-            <h1 className="font-display text-4xl font-semibold">{t("menu.title")}</h1>
-          </div>
-        </div>
+        {tableNumber === null ? (
+          <TableGate onSelect={(n) => setTableNumber(n)} />
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="mb-2 inline-block rounded-full bg-moss/10 px-4 py-1.5 text-sm font-semibold text-moss">
+                  {t("menu.table")}
+                  {String(tableNumber).padStart(2, "0")}
+                </p>
+                <h1 className="font-display text-4xl font-semibold">{t("menu.title")}</h1>
+              </div>
+            </div>
 
         {loading && <LoadingState label={t("menu.loading")} />}
         {!loading && error && <ErrorState message={error} onRetry={loadMenu} />}
@@ -251,6 +257,8 @@ export default function Menu() {
                 ))}
               </motion.div>
             )}
+          </>
+        )}
           </>
         )}
       </main>
