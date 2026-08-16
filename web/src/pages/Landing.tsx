@@ -99,7 +99,7 @@ export default function Landing() {
               className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-xl"
             >
               <img
-                src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1200&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1493857671505-72967e2e2760?q=80&w=1200&auto=format&fit=crop"
                 alt={t("landing.hero.imgAlt")}
                 className="h-full w-full object-cover"
                 loading="eager"
