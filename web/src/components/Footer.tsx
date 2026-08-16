@@ -17,6 +17,16 @@ export function Footer() {
               <li>{t("footer.address")}</li>
               <li>+998 90 123 45 67</li>
               <li>hello@kafeflow.uz</li>
+              <li>
+                <a
+                  href="https://t.me/KafeFlowBot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="focus-ring rounded underline decoration-ivory/30 underline-offset-2 transition hover:text-ivory hover:decoration-ivory"
+                >
+                  {t("footer.telegram")}
+                </a>
+              </li>
             </ul>
           </div>
           <div>

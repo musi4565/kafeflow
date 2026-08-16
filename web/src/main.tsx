@@ -5,7 +5,6 @@ import App from "./App";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
-import { VoiceProvider } from "./context/VoiceContext";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -14,9 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <LanguageProvider>
         <AuthProvider>
           <CartProvider>
-            <VoiceProvider>
-              <App />
-            </VoiceProvider>
+            <App />
           </CartProvider>
         </AuthProvider>
       </LanguageProvider>

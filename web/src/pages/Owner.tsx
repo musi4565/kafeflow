@@ -9,7 +9,6 @@ import { inventoryStatusColor, inventoryStatusLabel, orderStatusColor, orderStat
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
-import { VoiceToggleButton } from "../components/VoiceToggleButton";
 import type { DashboardResponse, InventoryItem } from "../lib/types";
 
 function StatTile({ label, value }: { label: string; value: string }) {
@@ -117,7 +116,6 @@ export default function Owner() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <VoiceToggleButton compact />
             <button
               onClick={() => {
                 logout();

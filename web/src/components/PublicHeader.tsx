@@ -4,7 +4,6 @@ import { Menu as MenuIcon, ShoppingCart, X } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { useCart } from "../context/CartContext";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { VoiceToggleButton } from "./VoiceToggleButton";
 
 function CartButton({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
@@ -66,7 +65,6 @@ export function PublicHeader() {
 
         <div className="hidden items-center gap-3 md:flex">
           <LanguageSwitcher />
-          <VoiceToggleButton compact />
           <CartButton />
           <button
             onClick={() => navigate("/menyu")}
@@ -104,7 +102,6 @@ export function PublicHeader() {
             ))}
             <div className="mt-1 flex items-center gap-3">
               <LanguageSwitcher />
-              <VoiceToggleButton compact />
             </div>
             <button
               onClick={() => {

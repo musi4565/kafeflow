@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, Lock } from "lucide-react";
+import { Check, Lock, Send } from "lucide-react";
 import { PublicHeader } from "../components/PublicHeader";
 import { LoadingState, ErrorState } from "../components/States";
 import { api, ApiError } from "../lib/api";
 import { formatCountdown, formatSum } from "../lib/format";
 import { getSocket } from "../lib/socket";
 import type { Order } from "../lib/types";
-import { speak } from "../lib/speech";
 import { useLanguage } from "../context/LanguageContext";
-import { matchesVoiceKeyword, voiceLangCode } from "../lib/translations";
-import { VOICE_COMMAND_EVENT } from "../context/VoiceContext";
 import type { TranslationKey } from "../lib/translations";
 
 function stepIndex(status: Order["status"]): number {
@@ -32,7 +29,7 @@ function stepIndex(status: Order["status"]): number {
 export default function OrderStatus() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   const TIMELINE: { key: string; labelKey: TranslationKey }[] = [
     { key: "NEW", labelKey: "orderStatus.timeline.new" },
@@ -105,13 +102,11 @@ export default function OrderStatus() {
       };
       const key = messages[order.status];
       if (key) {
-        const msg = t(key);
-        setLiveMessage(msg);
-        speak(msg, voiceLangCode(language));
+        setLiveMessage(t(key));
       }
     }
     lastStatus.current = order.status;
-  }, [order, t, language]);
+  }, [order, t]);
 
   const handleCancel = useCallback(async () => {
     if (!id) return;
@@ -132,24 +127,6 @@ export default function OrderStatus() {
   const msRemaining = deadline ? deadline - now : 0;
   const timerExpired = deadline ? msRemaining <= 0 : true;
   const canCancel = order?.status === "NEW" && order?.canCancel !== false && !timerExpired;
-
-  // Voice: "bekor qil" cancels the order if allowed, otherwise announces why not.
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const text = (e as CustomEvent<{ text: string }>).detail?.text || "";
-      if (!text) return;
-      const lower = text.toLowerCase();
-      if (matchesVoiceKeyword(lower, language, "cancel")) {
-        if (canCancel && !cancelling) {
-          handleCancel();
-        } else {
-          speak(t("orderStatus.cancelErrorFallback"), voiceLangCode(language));
-        }
-      }
-    };
-    window.addEventListener(VOICE_COMMAND_EVENT, handler);
-    return () => window.removeEventListener(VOICE_COMMAND_EVENT, handler);
-  }, [canCancel, cancelling, handleCancel, t, language]);
 
   if (loading) {
     return (
@@ -197,6 +174,14 @@ export default function OrderStatus() {
             {t("orderStatus.table")}
             {String(tableNum).padStart(2, "0")} · {t("orderStatus.total")} {formatSum(order.total)}
           </p>
+          <a
+            href="https://t.me/KafeFlowBot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring mt-5 inline-flex items-center gap-2 rounded-full border border-charcoal/20 px-5 py-2.5 text-sm font-medium text-charcoal transition hover:border-charcoal/40"
+          >
+            <Send className="h-4 w-4" aria-hidden="true" /> {t("orderStatus.telegramCta")}
+          </a>
         </motion.div>
 
         {order.status === "NEW" && (

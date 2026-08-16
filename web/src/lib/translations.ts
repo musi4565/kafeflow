@@ -17,12 +17,8 @@ const uz = {
   "header.nav.mobile.aria": "Mobil navigatsiya",
   "header.menuOpen": "Menyuni ochish",
   "header.menuClose": "Menyuni yopish",
-  "header.voice.label": "Ovozli rejim",
-  "header.voice.enable": "Ovozli rejimni yoqish",
-  "header.voice.disable": "Ovozli rejimni oʻchirish",
   "header.lang.aria": "Tilni tanlash",
   "header.cart.aria": "Savatni koʻrish",
-  "header.myOrder": "Buyurtmam",
   "myOrders.title": "Mening buyurtmalarim",
   "myOrders.emptyTitle": "Hali buyurtma bermagansiz",
   "myOrders.emptyDesc": "Menyudan mahsulot tanlab, birinchi buyurtmangizni bering.",
@@ -36,6 +32,7 @@ const uz = {
   "footer.address": "Toshkent, Chilonzor tumani",
   "footer.hours.label": "Ish vaqti",
   "footer.hours.value": "Har kuni: 08:00 – 23:00",
+  "footer.telegram": "Telegram bot: @KafeFlowBot",
   "footer.rights": "Barcha huquqlar himoyalangan.",
 
   // Landing
@@ -124,7 +121,6 @@ const uz = {
   "cart.submitting": "Yuborilmoqda...",
   "cart.errorNoTable": "Stol raqami aniqlanmadi. Iltimos, QR-kod orqali qayta kiring.",
   "cart.errorSubmit": "Buyurtma yuborilmadi. Qayta urinib koʻring.",
-  "cart.voiceEmpty": "Savat boʻsh.",
 
   // Order status page
   "orderStatus.loading": "Buyurtma yuklanmoqda...",
@@ -140,6 +136,7 @@ const uz = {
   "orderStatus.cancelledOrderMsg": "Bu buyurtma bekor qilindi.",
   "orderStatus.contentsTitle": "Buyurtma tarkibi",
   "orderStatus.newOrderButton": "Yangi buyurtma berish",
+  "orderStatus.telegramCta": "Telegram orqali kuzatib boring",
   "orderStatus.statusHeading": "Buyurtma holati",
   "orderStatus.timeline.new": "Qabul qilindi",
   "orderStatus.timeline.preparing": "Tayyorlanmoqda",
@@ -260,22 +257,6 @@ const uz = {
   "label.inventory.yetarli": "Yetarli",
   "label.inventory.kamaymoqda": "Kamaymoqda",
   "label.inventory.tugayapti": "Tugayapti",
-
-  // Voice
-  "voice.enabled": "Ovozli rejim yoqildi.",
-  "voice.recognitionError": "Ovozni tanib boʻlmadi.",
-  "voice.disabledError": "Ovozli rejim oʻchirildi. Mikrofonga ruxsat berilmagan.",
-  "voice.heardPrefix": "Eshitildi:",
-  "voice.addedToCartSuffix": "savatga qoʻshildi.",
-  "voice.wentBack": "Orqaga qaytildi.",
-  "voice.menuOpened": "Menyu sahifasi ochildi.",
-  "voice.scrolledDown": "Sahifa pastga siljidi.",
-  "voice.scrolledUp": "Sahifa yuqoriga siljidi.",
-  "voice.nothingToRead": "Bu sahifada oʻqiladigan maʼlumot topilmadi.",
-  "voice.searchActivated": "Qidiruv maydoni faollashtirildi. Nima qidirishni ayting.",
-  "voice.searchResultsFound": "ta mahsulot topildi.",
-  "voice.searchNoResults": "Hech narsa topilmadi.",
-  "voice.firstProductNone": "Roʻyxatda mahsulot yoʻq.",
 } as const;
 
 type TranslationKey = keyof typeof uz;
@@ -290,12 +271,8 @@ const ru: Record<TranslationKey, string> = {
   "header.nav.mobile.aria": "Мобильная навигация",
   "header.menuOpen": "Открыть меню",
   "header.menuClose": "Закрыть меню",
-  "header.voice.label": "Голосовой режим",
-  "header.voice.enable": "Включить голосовой режим",
-  "header.voice.disable": "Выключить голосовой режим",
   "header.lang.aria": "Выбор языка",
   "header.cart.aria": "Смотреть корзину",
-  "header.myOrder": "Мой заказ",
   "myOrders.title": "Мои заказы",
   "myOrders.emptyTitle": "Вы ещё не оформляли заказ",
   "myOrders.emptyDesc": "Выберите блюда из меню и оформите первый заказ.",
@@ -308,6 +285,7 @@ const ru: Record<TranslationKey, string> = {
   "footer.address": "Ташкент, Чиланзарский район",
   "footer.hours.label": "Часы работы",
   "footer.hours.value": "Ежедневно: 08:00 – 23:00",
+  "footer.telegram": "Telegram-бот: @KafeFlowBot",
   "footer.rights": "Все права защищены.",
 
   "landing.hero.title1": "Вкусная еда.",
@@ -392,7 +370,6 @@ const ru: Record<TranslationKey, string> = {
   "cart.submitting": "Отправка...",
   "cart.errorNoTable": "Номер столика не определён. Пожалуйста, войдите заново через QR-код.",
   "cart.errorSubmit": "Не удалось отправить заказ. Попробуйте ещё раз.",
-  "cart.voiceEmpty": "Корзина пуста.",
 
   "orderStatus.loading": "Заказ загружается...",
   "orderStatus.notFound": "Заказ не найден.",
@@ -407,6 +384,7 @@ const ru: Record<TranslationKey, string> = {
   "orderStatus.cancelledOrderMsg": "Этот заказ был отменён.",
   "orderStatus.contentsTitle": "Состав заказа",
   "orderStatus.newOrderButton": "Оформить новый заказ",
+  "orderStatus.telegramCta": "Следите через Telegram",
   "orderStatus.statusHeading": "Статус заказа",
   "orderStatus.timeline.new": "Принят",
   "orderStatus.timeline.preparing": "Готовится",
@@ -520,20 +498,6 @@ const ru: Record<TranslationKey, string> = {
   "label.inventory.kamaymoqda": "Уменьшается",
   "label.inventory.tugayapti": "Заканчивается",
 
-  "voice.enabled": "Голосовой режим включён.",
-  "voice.recognitionError": "Не удалось распознать голос.",
-  "voice.disabledError": "Голосовой режим выключен. Доступ к микрофону не разрешён.",
-  "voice.heardPrefix": "Услышано:",
-  "voice.addedToCartSuffix": "добавлено в корзину.",
-  "voice.wentBack": "Возврат назад выполнен.",
-  "voice.menuOpened": "Открыта страница меню.",
-  "voice.scrolledDown": "Страница прокручена вниз.",
-  "voice.scrolledUp": "Страница прокручена вверх.",
-  "voice.nothingToRead": "На этой странице нет информации для чтения.",
-  "voice.searchActivated": "Поле поиска активировано. Скажите, что искать.",
-  "voice.searchResultsFound": "товаров найдено.",
-  "voice.searchNoResults": "Ничего не найдено.",
-  "voice.firstProductNone": "В списке нет товаров.",
 };
 
 const en: Record<TranslationKey, string> = {
@@ -546,12 +510,8 @@ const en: Record<TranslationKey, string> = {
   "header.nav.mobile.aria": "Mobile navigation",
   "header.menuOpen": "Open menu",
   "header.menuClose": "Close menu",
-  "header.voice.label": "Voice mode",
-  "header.voice.enable": "Enable voice mode",
-  "header.voice.disable": "Disable voice mode",
   "header.lang.aria": "Select language",
   "header.cart.aria": "View cart",
-  "header.myOrder": "My order",
   "myOrders.title": "My orders",
   "myOrders.emptyTitle": "You haven't placed an order yet",
   "myOrders.emptyDesc": "Choose dishes from the menu and place your first order.",
@@ -564,6 +524,7 @@ const en: Record<TranslationKey, string> = {
   "footer.address": "Tashkent, Chilanzar district",
   "footer.hours.label": "Working hours",
   "footer.hours.value": "Daily: 08:00 – 23:00",
+  "footer.telegram": "Telegram bot: @KafeFlowBot",
   "footer.rights": "All rights reserved.",
 
   "landing.hero.title1": "Delicious food.",
@@ -648,7 +609,6 @@ const en: Record<TranslationKey, string> = {
   "cart.submitting": "Sending...",
   "cart.errorNoTable": "Table number not found. Please rescan the QR code.",
   "cart.errorSubmit": "Failed to send order. Please try again.",
-  "cart.voiceEmpty": "Cart is empty.",
 
   "orderStatus.loading": "Loading order...",
   "orderStatus.notFound": "Order not found.",
@@ -663,6 +623,7 @@ const en: Record<TranslationKey, string> = {
   "orderStatus.cancelledOrderMsg": "This order has been cancelled.",
   "orderStatus.contentsTitle": "Order contents",
   "orderStatus.newOrderButton": "Place a new order",
+  "orderStatus.telegramCta": "Follow along on Telegram",
   "orderStatus.statusHeading": "Order status",
   "orderStatus.timeline.new": "Accepted",
   "orderStatus.timeline.preparing": "Preparing",
@@ -776,20 +737,6 @@ const en: Record<TranslationKey, string> = {
   "label.inventory.kamaymoqda": "Running low",
   "label.inventory.tugayapti": "Almost out",
 
-  "voice.enabled": "Voice mode enabled.",
-  "voice.recognitionError": "Could not recognize speech.",
-  "voice.disabledError": "Voice mode has been disabled. Microphone access was not granted.",
-  "voice.heardPrefix": "Heard:",
-  "voice.addedToCartSuffix": "added to cart.",
-  "voice.wentBack": "Went back.",
-  "voice.menuOpened": "Menu page opened.",
-  "voice.scrolledDown": "Page scrolled down.",
-  "voice.scrolledUp": "Page scrolled up.",
-  "voice.nothingToRead": "No readable information found on this page.",
-  "voice.searchActivated": "Search field activated. Say what to search for.",
-  "voice.searchResultsFound": "products found.",
-  "voice.searchNoResults": "Nothing found.",
-  "voice.firstProductNone": "There are no products in the list.",
 };
 
 const dictionaries: Record<Language, Record<TranslationKey, string>> = { uz, ru, en };
@@ -799,89 +746,3 @@ export function translate(language: Language, key: TranslationKey): string {
 }
 
 export type { TranslationKey };
-
-// --- Voice: recognition/synthesis language codes ---
-export function voiceLangCode(language: Language): string {
-  switch (language) {
-    case "ru":
-      return "ru-RU";
-    case "en":
-      return "en-US";
-    default:
-      return "uz-UZ";
-  }
-}
-
-// --- Voice: forgiving keyword matching per language ---
-const voiceKeywords: Record<Language, Record<string, string[]>> = {
-  uz: {
-    back: ["orqaga"],
-    menu: ["menyu"],
-    products: ["mahsulotlarni och", "mahsulotlar"],
-    payment: ["toʻlov", "to'lov", "tolov"],
-    cancel: ["bekor qil"],
-    order: ["buyurtma ber"],
-    cart: ["savatga qo"],
-    firstProduct: ["birinchi mahsulot"],
-    searchOpen: ["qidiruvni och", "qidiruv"],
-    scrollDown: ["pastga"],
-    scrollUp: ["yuqoriga"],
-    readPage: ["oʻqib ber", "o'qib ber", "oqib ber"],
-    stop: ["toʻxtat", "to'xtat", "toxtat"],
-  },
-  ru: {
-    back: ["назад"],
-    menu: ["меню"],
-    products: ["товары", "продукты"],
-    payment: ["оплат"],
-    cancel: ["отмен"],
-    order: ["заказать", "закажи"],
-    cart: ["корзин"],
-    firstProduct: ["первый товар", "первый продукт"],
-    searchOpen: ["поиск", "открой поиск"],
-    scrollDown: ["вниз"],
-    scrollUp: ["вверх"],
-    readPage: ["прочитай", "читай страницу"],
-    stop: ["стоп", "останов"],
-  },
-  en: {
-    back: ["back"],
-    menu: ["menu"],
-    products: ["open products", "products"],
-    payment: ["payment", "pay"],
-    cancel: ["cancel"],
-    order: ["order"],
-    cart: ["cart"],
-    firstProduct: ["first product"],
-    searchOpen: ["open search", "search"],
-    scrollDown: ["scroll down", "down"],
-    scrollUp: ["scroll up", "up"],
-    readPage: ["read page", "read this", "read"],
-    stop: ["stop"],
-  },
-};
-
-export function matchesVoiceKeyword(text: string, language: Language, key: keyof (typeof voiceKeywords)["uz"]): boolean {
-  const list = voiceKeywords[language]?.[key] || [];
-  const lower = text.toLowerCase();
-  return list.some((kw) => lower.includes(kw));
-}
-
-// --- Voice: "<query> deb qidir" / "search for <query>" style extraction ---
-const searchPatterns: Record<Language, RegExp[]> = {
-  uz: [/(.+?)\s+deb qidir(?:ing)?/i, /qidir(?:ing)?\s+(.+)/i],
-  ru: [/(?:найди|найти|искать|поищи)\s+(.+)/i],
-  en: [/search(?:\s+for)?\s+(.+)/i, /find\s+(.+)/i],
-};
-
-export function extractSearchQuery(text: string, language: Language): string | null {
-  const patterns = searchPatterns[language] || [];
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match?.[1]) {
-      const query = match[1].trim();
-      if (query) return query;
-    }
-  }
-  return null;
-}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Search, ShoppingCart } from "lucide-react";
@@ -9,18 +9,14 @@ import { api, ApiError } from "../lib/api";
 import { formatSum } from "../lib/format";
 import { useCart } from "../context/CartContext";
 import type { MenuResponse, Product } from "../lib/types";
-import { speak } from "../lib/speech";
 import { useLanguage } from "../context/LanguageContext";
-import { extractSearchQuery, matchesVoiceKeyword, voiceLangCode } from "../lib/translations";
-import { VOICE_COMMAND_EVENT, useVoice } from "../context/VoiceContext";
 
 const ALL_CATEGORY = "__ALL__";
 
 export default function Menu() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
-  const { voiceEnabled } = useVoice();
+  const { t } = useLanguage();
   const tableParam = searchParams.get("stol");
   const urlTableNumber = tableParam ? Number(tableParam) : null;
 
@@ -31,9 +27,7 @@ export default function Menu() {
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [voiceMsg, setVoiceMsg] = useState<string>("");
   const [addedFlash, setAddedFlash] = useState<string | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // A real QR code on the table encodes ?stol=NN — sync it into the cart's
   // persisted table selection. If there's no param (e.g. arriving from the
@@ -80,75 +74,13 @@ export default function Menu() {
       addItem(product);
       setAddedFlash(product.id);
       setTimeout(() => setAddedFlash(null), 700);
-      if (voiceEnabled) {
-        speak(`${product.name} ${t("voice.addedToCartSuffix")}`, voiceLangCode(language));
-      }
     },
-    [addItem, t, language, voiceEnabled]
+    [addItem]
   );
-
-  // Per-page voice command handling: subscribe to the global recognizer's events.
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const text = (e as CustomEvent<{ text: string }>).detail?.text || "";
-      if (!text) return;
-      setVoiceMsg(`${t("voice.heardPrefix")} "${text}"`);
-      const lower = text.toLowerCase();
-
-      if (matchesVoiceKeyword(lower, language, "searchOpen")) {
-        searchInputRef.current?.focus();
-        speak(t("voice.searchActivated"), voiceLangCode(language));
-        return;
-      }
-
-      const query = extractSearchQuery(lower, language);
-      if (query) {
-        setSearchQuery(query);
-        const base =
-          activeCategory === ALL_CATEGORY
-            ? menu?.products || []
-            : (menu?.products || []).filter((p) => p.category === activeCategory);
-        const matches = base.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
-        speak(
-          matches.length > 0
-            ? `${matches.length} ${t("voice.searchResultsFound")}`
-            : t("voice.searchNoResults"),
-          voiceLangCode(language)
-        );
-        return;
-      }
-
-      if (matchesVoiceKeyword(lower, language, "firstProduct")) {
-        const first = filteredProducts[0];
-        if (first) {
-          handleAdd(first);
-        } else {
-          speak(t("voice.firstProductNone"), voiceLangCode(language));
-        }
-        return;
-      }
-
-      if (matchesVoiceKeyword(lower, language, "cart") || matchesVoiceKeyword(lower, language, "order")) {
-        navigate("/savat");
-        return;
-      }
-
-      const product = (menu?.products || []).find((p) => lower.includes(p.name.toLowerCase()));
-      if (product) {
-        handleAdd(product);
-      }
-    };
-    window.addEventListener(VOICE_COMMAND_EVENT, handler);
-    return () => window.removeEventListener(VOICE_COMMAND_EVENT, handler);
-  }, [menu, navigate, handleAdd, t, language, activeCategory, filteredProducts]);
 
   return (
     <div className="min-h-screen pb-28">
       <PublicHeader />
-
-      <div aria-live="polite" className="sr-only">
-        {voiceMsg}
-      </div>
 
       <main className="mx-auto max-w-6xl px-5 py-10">
         {tableNumber === null ? (
@@ -174,7 +106,6 @@ export default function Menu() {
               <Search className="h-4 w-4 shrink-0 text-charcoal/40" aria-hidden="true" />
               <span className="sr-only">{t("menu.searchLabel")}</span>
               <input
-                ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

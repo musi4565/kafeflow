@@ -8,7 +8,6 @@ import { getSocket } from "../lib/socket";
 import type { Order } from "../lib/types";
 import { useLanguage } from "../context/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
-import { VoiceToggleButton } from "../components/VoiceToggleButton";
 
 interface OrderCardProps {
   order: Order;
@@ -168,7 +167,6 @@ export default function Kitchen() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <VoiceToggleButton compact />
           </div>
         </div>
       </header>

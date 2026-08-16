@@ -13,9 +13,6 @@ import { tableStatusColor, tableStatusLabel } from "../lib/labels";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
-import { VoiceToggleButton } from "../components/VoiceToggleButton";
-import { matchesVoiceKeyword } from "../lib/translations";
-import { VOICE_COMMAND_EVENT } from "../context/VoiceContext";
 import type { Order, PaymentMethod, TableInfo } from "../lib/types";
 
 export default function Waiter() {
@@ -137,22 +134,6 @@ export default function Waiter() {
     return () => window.removeEventListener("keydown", onKey);
   }, [paymentOpen, selectedTable, noShowConfirming]);
 
-  // Voice: "toʻlov" opens the payment modal for the currently open order detail.
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const text = (e as CustomEvent<{ text: string }>).detail?.text || "";
-      if (!text) return;
-      const lower = text.toLowerCase();
-      if (matchesVoiceKeyword(lower, language, "payment")) {
-        if (orderDetail && orderDetail.status !== "PAID" && !paymentOpen) {
-          setPaymentOpen(true);
-        }
-      }
-    };
-    window.addEventListener(VOICE_COMMAND_EVENT, handler);
-    return () => window.removeEventListener(VOICE_COMMAND_EVENT, handler);
-  }, [orderDetail, paymentOpen, language]);
-
   const handleConfirmPayment = async (method: PaymentMethod) => {
     if (!orderDetail) return;
     setPaySubmitting(true);
@@ -194,7 +175,6 @@ export default function Waiter() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <VoiceToggleButton compact />
             <button
               onClick={() => {
                 logout();

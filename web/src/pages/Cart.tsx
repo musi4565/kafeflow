@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
@@ -8,13 +8,10 @@ import { useCart } from "../context/CartContext";
 import { api, ApiError } from "../lib/api";
 import { formatSum } from "../lib/format";
 import { useLanguage } from "../context/LanguageContext";
-import { matchesVoiceKeyword, voiceLangCode } from "../lib/translations";
-import { VOICE_COMMAND_EVENT } from "../context/VoiceContext";
-import { speak } from "../lib/speech";
 
 export default function Cart() {
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { items, tableNumber, incrementItem, decrementItem, removeItem, totalPrice, clearCart, addOrderId } =
     useCart();
   const [submitting, setSubmitting] = useState(false);
@@ -41,25 +38,7 @@ export default function Cart() {
     } finally {
       setSubmitting(false);
     }
-  }, [tableNumber, items, clearCart, navigate, t]);
-
-  // Voice: "buyurtma ber" submits the order (same handler as the button).
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const text = (e as CustomEvent<{ text: string }>).detail?.text || "";
-      if (!text) return;
-      const lower = text.toLowerCase();
-      if (matchesVoiceKeyword(lower, language, "order")) {
-        if (items.length === 0) {
-          speak(t("cart.voiceEmpty"), voiceLangCode(language));
-          return;
-        }
-        handleSubmit();
-      }
-    };
-    window.addEventListener(VOICE_COMMAND_EVENT, handler);
-    return () => window.removeEventListener(VOICE_COMMAND_EVENT, handler);
-  }, [items, language, t, handleSubmit]);
+  }, [tableNumber, items, clearCart, navigate, t, addOrderId]);
 
   return (
     <div className="min-h-screen pb-16">
