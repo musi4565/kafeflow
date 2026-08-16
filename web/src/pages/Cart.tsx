@@ -15,7 +15,8 @@ import { speak } from "../lib/speech";
 export default function Cart() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
-  const { items, tableNumber, incrementItem, decrementItem, removeItem, totalPrice, clearCart } = useCart();
+  const { items, tableNumber, incrementItem, decrementItem, removeItem, totalPrice, clearCart, setLastOrderId } =
+    useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +34,7 @@ export default function Cart() {
         items.map((i) => ({ productId: i.productId, quantity: i.quantity }))
       );
       clearCart();
+      setLastOrderId(order.id);
       navigate(`/buyurtma/${order.id}`);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t("cart.errorSubmit"));

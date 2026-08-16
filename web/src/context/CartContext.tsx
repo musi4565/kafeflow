@@ -12,6 +12,8 @@ interface CartContextValue {
   clearCart: () => void;
   totalCount: number;
   totalPrice: number;
+  lastOrderId: string | null;
+  setLastOrderId: (id: string | null) => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -20,11 +22,23 @@ function storageKey(table: number | null) {
   return `kafeflow_cart_${table ?? "default"}`;
 }
 
+const LAST_ORDER_KEY = "kafeflow_last_order_id";
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [tableNumber, setTableNumberState] = useState<number | null>(() => {
     const raw = localStorage.getItem("kafeflow_table");
     return raw ? Number(raw) : null;
   });
+
+  const [lastOrderId, setLastOrderIdState] = useState<string | null>(() =>
+    localStorage.getItem(LAST_ORDER_KEY)
+  );
+
+  const setLastOrderId = useCallback((id: string | null) => {
+    setLastOrderIdState(id);
+    if (id) localStorage.setItem(LAST_ORDER_KEY, id);
+    else localStorage.removeItem(LAST_ORDER_KEY);
+  }, []);
 
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
@@ -110,6 +124,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     clearCart,
     totalCount,
     totalPrice,
+    lastOrderId,
+    setLastOrderId,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

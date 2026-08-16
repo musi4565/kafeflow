@@ -22,6 +22,7 @@ const uz = {
   "header.voice.disable": "Ovozli rejimni oʻchirish",
   "header.lang.aria": "Tilni tanlash",
   "header.cart.aria": "Savatni koʻrish",
+  "header.myOrder": "Buyurtmam",
 
   // Footer
   "footer.tagline": "Kichik kafe uchun buyurtma, oshxona va toʻlovni bitta sodda tizimda boshqarish.",
@@ -288,6 +289,7 @@ const ru: Record<TranslationKey, string> = {
   "header.voice.disable": "Выключить голосовой режим",
   "header.lang.aria": "Выбор языка",
   "header.cart.aria": "Смотреть корзину",
+  "header.myOrder": "Мой заказ",
 
   "footer.tagline": "Управляйте заказами, кухней и оплатой небольшого кафе в одной простой системе.",
   "footer.contact": "Контакты",
@@ -537,6 +539,7 @@ const en: Record<TranslationKey, string> = {
   "header.voice.disable": "Disable voice mode",
   "header.lang.aria": "Select language",
   "header.cart.aria": "View cart",
+  "header.myOrder": "My order",
 
   "footer.tagline": "Manage ordering, kitchen and payment for a small café in one simple system.",
   "footer.contact": "Contact",
