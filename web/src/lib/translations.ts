@@ -79,6 +79,8 @@ const uz = {
   "menu.unavailable": "Bu mahsulot hozir mavjud emas.",
   "menu.itemsUnit": "ta mahsulot",
   "menu.viewCart": "Savatni koʻrish",
+  "menu.searchLabel": "Mahsulot qidirish",
+  "menu.searchPlaceholder": "Mahsulot nomini yozing...",
 
   // Cart page
   "cart.back": "Orqaga",
@@ -232,6 +234,15 @@ const uz = {
   "voice.disabledError": "Ovozli rejim oʻchirildi. Mikrofonga ruxsat berilmagan.",
   "voice.heardPrefix": "Eshitildi:",
   "voice.addedToCartSuffix": "savatga qoʻshildi.",
+  "voice.wentBack": "Orqaga qaytildi.",
+  "voice.menuOpened": "Menyu sahifasi ochildi.",
+  "voice.scrolledDown": "Sahifa pastga siljidi.",
+  "voice.scrolledUp": "Sahifa yuqoriga siljidi.",
+  "voice.nothingToRead": "Bu sahifada oʻqiladigan maʼlumot topilmadi.",
+  "voice.searchActivated": "Qidiruv maydoni faollashtirildi. Nima qidirishni ayting.",
+  "voice.searchResultsFound": "ta mahsulot topildi.",
+  "voice.searchNoResults": "Hech narsa topilmadi.",
+  "voice.firstProductNone": "Roʻyxatda mahsulot yoʻq.",
 } as const;
 
 type TranslationKey = keyof typeof uz;
@@ -305,6 +316,8 @@ const ru: Record<TranslationKey, string> = {
   "menu.unavailable": "Этот товар сейчас недоступен.",
   "menu.itemsUnit": "товара",
   "menu.viewCart": "Смотреть корзину",
+  "menu.searchLabel": "Поиск товара",
+  "menu.searchPlaceholder": "Введите название товара...",
 
   "cart.back": "Назад",
   "cart.title": "Ваш заказ",
@@ -447,6 +460,15 @@ const ru: Record<TranslationKey, string> = {
   "voice.disabledError": "Голосовой режим выключен. Доступ к микрофону не разрешён.",
   "voice.heardPrefix": "Услышано:",
   "voice.addedToCartSuffix": "добавлено в корзину.",
+  "voice.wentBack": "Возврат назад выполнен.",
+  "voice.menuOpened": "Открыта страница меню.",
+  "voice.scrolledDown": "Страница прокручена вниз.",
+  "voice.scrolledUp": "Страница прокручена вверх.",
+  "voice.nothingToRead": "На этой странице нет информации для чтения.",
+  "voice.searchActivated": "Поле поиска активировано. Скажите, что искать.",
+  "voice.searchResultsFound": "товаров найдено.",
+  "voice.searchNoResults": "Ничего не найдено.",
+  "voice.firstProductNone": "В списке нет товаров.",
 };
 
 const en: Record<TranslationKey, string> = {
@@ -518,6 +540,8 @@ const en: Record<TranslationKey, string> = {
   "menu.unavailable": "This product is currently unavailable.",
   "menu.itemsUnit": "items",
   "menu.viewCart": "View cart",
+  "menu.searchLabel": "Search products",
+  "menu.searchPlaceholder": "Type a product name...",
 
   "cart.back": "Back",
   "cart.title": "Your order",
@@ -660,6 +684,15 @@ const en: Record<TranslationKey, string> = {
   "voice.disabledError": "Voice mode has been disabled. Microphone access was not granted.",
   "voice.heardPrefix": "Heard:",
   "voice.addedToCartSuffix": "added to cart.",
+  "voice.wentBack": "Went back.",
+  "voice.menuOpened": "Menu page opened.",
+  "voice.scrolledDown": "Page scrolled down.",
+  "voice.scrolledUp": "Page scrolled up.",
+  "voice.nothingToRead": "No readable information found on this page.",
+  "voice.searchActivated": "Search field activated. Say what to search for.",
+  "voice.searchResultsFound": "products found.",
+  "voice.searchNoResults": "Nothing found.",
+  "voice.firstProductNone": "There are no products in the list.",
 };
 
 const dictionaries: Record<Language, Record<TranslationKey, string>> = { uz, ru, en };
@@ -687,26 +720,47 @@ const voiceKeywords: Record<Language, Record<string, string[]>> = {
   uz: {
     back: ["orqaga"],
     menu: ["menyu"],
+    products: ["mahsulotlarni och", "mahsulotlar"],
     payment: ["toʻlov", "to'lov", "tolov"],
     cancel: ["bekor qil"],
     order: ["buyurtma ber"],
     cart: ["savatga qo"],
+    firstProduct: ["birinchi mahsulot"],
+    searchOpen: ["qidiruvni och", "qidiruv"],
+    scrollDown: ["pastga"],
+    scrollUp: ["yuqoriga"],
+    readPage: ["oʻqib ber", "o'qib ber", "oqib ber"],
+    stop: ["toʻxtat", "to'xtat", "toxtat"],
   },
   ru: {
     back: ["назад"],
     menu: ["меню"],
+    products: ["товары", "продукты"],
     payment: ["оплат"],
     cancel: ["отмен"],
     order: ["заказать", "закажи"],
     cart: ["корзин"],
+    firstProduct: ["первый товар", "первый продукт"],
+    searchOpen: ["поиск", "открой поиск"],
+    scrollDown: ["вниз"],
+    scrollUp: ["вверх"],
+    readPage: ["прочитай", "читай страницу"],
+    stop: ["стоп", "останов"],
   },
   en: {
     back: ["back"],
     menu: ["menu"],
+    products: ["open products", "products"],
     payment: ["payment", "pay"],
     cancel: ["cancel"],
     order: ["order"],
     cart: ["cart"],
+    firstProduct: ["first product"],
+    searchOpen: ["open search", "search"],
+    scrollDown: ["scroll down", "down"],
+    scrollUp: ["scroll up", "up"],
+    readPage: ["read page", "read this", "read"],
+    stop: ["stop"],
   },
 };
 
@@ -714,4 +768,23 @@ export function matchesVoiceKeyword(text: string, language: Language, key: keyof
   const list = voiceKeywords[language]?.[key] || [];
   const lower = text.toLowerCase();
   return list.some((kw) => lower.includes(kw));
+}
+
+// --- Voice: "<query> deb qidir" / "search for <query>" style extraction ---
+const searchPatterns: Record<Language, RegExp[]> = {
+  uz: [/(.+?)\s+deb qidir(?:ing)?/i, /qidir(?:ing)?\s+(.+)/i],
+  ru: [/(?:найди|найти|искать|поищи)\s+(.+)/i],
+  en: [/search(?:\s+for)?\s+(.+)/i, /find\s+(.+)/i],
+};
+
+export function extractSearchQuery(text: string, language: Language): string | null {
+  const patterns = searchPatterns[language] || [];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) {
+      const query = match[1].trim();
+      if (query) return query;
+    }
+  }
+  return null;
 }

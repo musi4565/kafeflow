@@ -84,17 +84,57 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const handleGlobalCommand = useCallback((text: string) => {
+  const readMainContent = useCallback(() => {
     const lang = languageRef.current;
-    if (matchesVoiceKeyword(text, lang, "back")) {
-      navigateRef.current(-1);
+    const main = document.querySelector("main") || document.body;
+    const raw = (main as HTMLElement).innerText || "";
+    const text = raw.replace(/\s+/g, " ").trim();
+    if (!text) {
+      speak(tRef.current("voice.nothingToRead"), voiceLangCode(lang));
       return;
     }
-    if (matchesVoiceKeyword(text, lang, "menu")) {
-      navigateRef.current("/menyu");
-      return;
-    }
+    const MAX_CHARS = 600;
+    const excerpt = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) : text;
+    speak(excerpt, voiceLangCode(lang));
   }, []);
+
+  const handleGlobalCommand = useCallback(
+    (text: string) => {
+      const lang = languageRef.current;
+
+      // "Stop" always wins and short-circuits everything else: cancel any speech
+      // immediately, no further processing of this utterance.
+      if (matchesVoiceKeyword(text, lang, "stop")) {
+        window.speechSynthesis?.cancel();
+        return;
+      }
+      if (matchesVoiceKeyword(text, lang, "readPage")) {
+        readMainContent();
+        return;
+      }
+      if (matchesVoiceKeyword(text, lang, "scrollDown")) {
+        window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" });
+        speak(tRef.current("voice.scrolledDown"), voiceLangCode(lang));
+        return;
+      }
+      if (matchesVoiceKeyword(text, lang, "scrollUp")) {
+        window.scrollBy({ top: -window.innerHeight * 0.8, behavior: "smooth" });
+        speak(tRef.current("voice.scrolledUp"), voiceLangCode(lang));
+        return;
+      }
+      if (matchesVoiceKeyword(text, lang, "back")) {
+        navigateRef.current(-1);
+        speak(tRef.current("voice.wentBack"), voiceLangCode(lang));
+        return;
+      }
+      if (matchesVoiceKeyword(text, lang, "menu") || matchesVoiceKeyword(text, lang, "products")) {
+        navigateRef.current("/menyu");
+        speak(tRef.current("voice.menuOpened"), voiceLangCode(lang));
+        return;
+      }
+    },
+    [readMainContent]
+  );
 
   const startRecognition = useCallback(() => {
     const Ctor = getRecognitionCtor();

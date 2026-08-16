@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, ShoppingCart } from "lucide-react";
+import { Plus, Search, ShoppingCart } from "lucide-react";
 import { PublicHeader } from "../components/PublicHeader";
 import { LoadingState, EmptyState, ErrorState } from "../components/States";
 import { api, ApiError } from "../lib/api";
@@ -10,7 +10,7 @@ import { useCart } from "../context/CartContext";
 import type { MenuResponse, Product } from "../lib/types";
 import { speak } from "../lib/speech";
 import { useLanguage } from "../context/LanguageContext";
-import { matchesVoiceKeyword, voiceLangCode } from "../lib/translations";
+import { extractSearchQuery, matchesVoiceKeyword, voiceLangCode } from "../lib/translations";
 import { VOICE_COMMAND_EVENT, useVoice } from "../context/VoiceContext";
 
 const ALL_CATEGORY = "__ALL__";
@@ -29,8 +29,10 @@ export default function Menu() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [voiceMsg, setVoiceMsg] = useState<string>("");
   const [addedFlash, setAddedFlash] = useState<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (tableNumber !== null && !Number.isNaN(tableNumber)) {
@@ -58,10 +60,16 @@ export default function Menu() {
   const categories = useMemo(() => [ALL_CATEGORY, ...(menu?.categories || [])], [menu]);
 
   const filteredProducts = useMemo(() => {
-    const products = menu?.products || [];
-    if (activeCategory === ALL_CATEGORY) return products;
-    return products.filter((p) => p.category === activeCategory);
-  }, [menu, activeCategory]);
+    let products = menu?.products || [];
+    if (activeCategory !== ALL_CATEGORY) {
+      products = products.filter((p) => p.category === activeCategory);
+    }
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      products = products.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    return products;
+  }, [menu, activeCategory, searchQuery]);
 
   const handleAdd = useCallback(
     (product: Product) => {
@@ -83,6 +91,39 @@ export default function Menu() {
       setVoiceMsg(`${t("voice.heardPrefix")} "${text}"`);
       const lower = text.toLowerCase();
 
+      if (matchesVoiceKeyword(lower, language, "searchOpen")) {
+        searchInputRef.current?.focus();
+        speak(t("voice.searchActivated"), voiceLangCode(language));
+        return;
+      }
+
+      const query = extractSearchQuery(lower, language);
+      if (query) {
+        setSearchQuery(query);
+        const base =
+          activeCategory === ALL_CATEGORY
+            ? menu?.products || []
+            : (menu?.products || []).filter((p) => p.category === activeCategory);
+        const matches = base.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+        speak(
+          matches.length > 0
+            ? `${matches.length} ${t("voice.searchResultsFound")}`
+            : t("voice.searchNoResults"),
+          voiceLangCode(language)
+        );
+        return;
+      }
+
+      if (matchesVoiceKeyword(lower, language, "firstProduct")) {
+        const first = filteredProducts[0];
+        if (first) {
+          handleAdd(first);
+        } else {
+          speak(t("voice.firstProductNone"), voiceLangCode(language));
+        }
+        return;
+      }
+
       if (matchesVoiceKeyword(lower, language, "cart") || matchesVoiceKeyword(lower, language, "order")) {
         navigate("/savat");
         return;
@@ -95,7 +136,7 @@ export default function Menu() {
     };
     window.addEventListener(VOICE_COMMAND_EVENT, handler);
     return () => window.removeEventListener(VOICE_COMMAND_EVENT, handler);
-  }, [menu, navigate, handleAdd, t, language]);
+  }, [menu, navigate, handleAdd, t, language, activeCategory, filteredProducts]);
 
   return (
     <div className="min-h-screen pb-28">
@@ -123,7 +164,20 @@ export default function Menu() {
 
         {!loading && !error && menu && (
           <>
-            <div className="mt-8 flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label={t("menu.categoriesAria")}>
+            <label className="mt-6 flex items-center gap-2 rounded-full border border-charcoal/15 px-4 py-2.5 text-sm focus-within:border-charcoal/40">
+              <Search className="h-4 w-4 shrink-0 text-charcoal/40" aria-hidden="true" />
+              <span className="sr-only">{t("menu.searchLabel")}</span>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("menu.searchPlaceholder")}
+                className="w-full bg-transparent outline-none placeholder:text-charcoal/40"
+              />
+            </label>
+
+            <div className="mt-4 flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label={t("menu.categoriesAria")}>
               {categories.map((cat) => (
                 <button
                   key={cat}
